@@ -19,9 +19,9 @@ const logger = createLogger({
       // maxsize: 2880,  
       // maxFiles: 5,
     }), 
-    // new transports.Console({
-    //   format: format.combine(format.colorize(), format.simple()),
-    // }),
+    new transports.Console({
+      format: format.combine(format.colorize(), format.simple()),
+    }),
   ],
 });
 

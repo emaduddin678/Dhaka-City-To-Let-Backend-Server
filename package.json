@@ -1,7 +1,7 @@
 {
-  "name": "e-commerce-anisul",
+  "name": "Dhaka-City-To-Let",
   "version": "1.0.0",
-  "description": "Ecommerce mern stack Project",
+  "description": "Dhaka-City-To-Let is a MERN stack application designed for managing rental properties in Dhaka city. It provides features for property listings, user authentication, and property management.",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -9,10 +9,18 @@
     "dev": "nodemon ./src/server.js"
   },
   "keywords": [
-    "ecommerce",
-    "mern stack"
+    "tolet",
+    "rental",
+    "property",
+    "management",
+    "mern",
+    "dhaka",
+    "city",
+    "real-estate",
+    "housing",
+    "application"
   ],
-  "author": "",
+  "author": "emaduddin",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
