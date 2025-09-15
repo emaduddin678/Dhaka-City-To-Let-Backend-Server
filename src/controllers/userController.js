@@ -1,5 +1,7 @@
 const createError = require("http-errors");
 const jwt = require("jsonwebtoken");
+const path = require("path");
+const fs = require("fs");
 
 const User = require("../models/userModel");
 const { successResponse } = require("./responseController");
@@ -8,7 +10,7 @@ const deleteImage = require("../helper/deleteImage");
 const { createJSONWebToken } = require("../helper/jsonwebtoken");
 const {
   jwtActivationKey,
-  clientURL,
+  serverURL,
   jwtResetPasswordKey,
 } = require("../secret");
 const emailWithNodeMailer = require("../helper/email");
@@ -26,6 +28,7 @@ const {
   forgetPasswordByEmail,
   resetPassword,
 } = require("../services/userService");
+const { uploadBufferToCloudinary } = require("../helper/cloudinaryHelper");
 // const mongoose = require("mongoose");
 // const fs = require("fs").promises;
 
@@ -91,59 +94,107 @@ const handleDeleteUserById = async (req, res, next) => {
   }
 };
 
+
 const handleProcessRegister = async (req, res, next) => {
   try {
-    const { name, email, password, phone, address } = req.body;
+    const {
+      firstName,
+      lastName,
+      email,
+      password,
+      phoneNumber,
+      address,
+      occupation,
+      organizationName,
+      position,
+    } = req.body;
 
-    const image = req.file?.path;
-
-    if (image && image.size > 1024 * 1024 * 4) {
-      throw createError(
-        400,
-        "Image file is too large. It must be less than 4mb"
-      );
-    }
-
+    // ✅ Check if user already exists
     const userExists = await checkUserExists(email);
-
     if (userExists) {
       throw createError(
         409,
-        "User with this email already exist. Please login"
+        "User with this email already exists. Please login"
       );
     }
 
-    // create jwt
+    // ✅ Upload images to Cloudinary
+    const uploadedImages = {};
+    for (const fieldName of ["profileImage", "nidFront", "nidBack"]) {
+      if (req.files?.[fieldName]?.[0]) {
+        const file = req.files[fieldName][0];
+        if (file.size > 4 * 1024 * 1024) {
+          throw createError(400, `${fieldName} is too large. Max size is 4MB`);
+        }
+        const result = await uploadBufferToCloudinary(file.buffer, "users");
+        uploadedImages[fieldName] = result.secure_url;
+      }
+    }
+    console.log("Uploaded Images:", uploadedImages);
+
+    // ✅ Convert boolean strings to actual booleans
+    const isTenant = req.body.isTenant === "true" || req.body.isTenant === true;
+    const isOwner = req.body.isOwner === "true" || req.body.isOwner === true;
+    const agreeTerms =
+      req.body.agreeTerms === "true" || req.body.agreeTerms === true;
+
+    // ✅ Parse nested JSON strings if sent as strings
+    const presentAddress =
+      typeof req.body.presentAddress === "string"
+        ? JSON.parse(req.body.presentAddress)
+        : req.body.presentAddress;
+
+    const permanentAddress =
+      typeof req.body.permanentAddress === "string"
+        ? JSON.parse(req.body.permanentAddress)
+        : req.body.permanentAddress;
+
+    // ✅ Create JWT payload
     const tokenPayload = {
-      name,
+      firstName,
+      lastName,
       email,
       password,
-      phone,
+      phoneNumber,
       address,
+      ...uploadedImages,
+      isTenant,
+      isOwner,
+      presentAddress,
+      permanentAddress,
+      occupation,
+      organizationName,
+      position,
+      agreeTerms,
     };
-
-    if (image) {
-      tokenPayload.image = image;
-    }
 
     const token = createJSONWebToken(tokenPayload, jwtActivationKey, "10m");
 
-    //prepare email
+    const template = path.join(
+      __dirname,
+      "../../emailTemplates/accountActivation.html"
+    );
+    let emailHtmlTemplate = fs.readFileSync(template, "utf-8");
+
+    const emailHtmlTemplateData = emailHtmlTemplate
+      .replace("{{firstName}}", firstName)
+      .replace("{{lastName}}", lastName)
+      .replace("{{activationLink}}", `${serverURL}/api/users/activate/${token}`)
+      .replace("{{year}}", new Date().getFullYear());
+
+    console.log(template);
     const emailData = {
       email,
       subject: "Account Activation Email",
-      html: `
-        <h2> Hello ${name} !</h2>
-        <p> Please click here to link <a href="${clientURL}/api/users/activate/${token}" target="_blank"> activate your account </a></p>
-      `,
+      html: emailHtmlTemplateData,
     };
 
-    //send email with nodemailer
-    sendEmail(emailData);
+    await sendEmail(emailData);
 
+    // ✅ Send success response
     return successResponse(res, {
       statusCode: 200,
-      message: `Please go to your ${email} for completing your registration process`,
+      message: `Activation email sent to ${email}. Please check your inbox.`,
       payload: token,
     });
   } catch (error) {
@@ -154,9 +205,9 @@ const handleProcessRegister = async (req, res, next) => {
 const handleActivateUserAccount = async (req, res, next) => {
   try {
     const token = req.body.token;
-
+    console.log(token);
     if (!token) throw createError(404, "token not found!");
-
+    return;
     try {
       const decoded = jwt.verify(token, jwtActivationKey);
       if (!decoded) throw createError(404, "user was not able to verified");
@@ -171,12 +222,9 @@ const handleActivateUserAccount = async (req, res, next) => {
 
       const image = decoded.image;
       if (image) {
-        const response = await cloudinary.uploader.upload(
-          image,
-          {
-            folder: "EcommerceImageServer/users",
-          }
-        );
+        const response = await cloudinary.uploader.upload(image, {
+          folder: "EcommerceImageServer/users",
+        });
         decoded.image = response.secure_url;
       }
 

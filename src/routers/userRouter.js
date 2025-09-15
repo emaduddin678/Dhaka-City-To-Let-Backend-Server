@@ -21,14 +21,19 @@ const {
 const runValidation = require("../validators");
 const { isLoggedIn, isLoggedOut, isAdmin } = require("../middlewares/auth");
 const { uploadUserImage } = require("../middlewares/uploadFile");
+const { uploadImageMulter } = require("../middlewares/uploadImageMulter");
 const userRouter = express.Router();
 
 userRouter.post(
   "/process-register",
-  isLoggedOut,
-  uploadUserImage.single("image"),
-  validateUserRagistration,
-  runValidation,
+  // isLoggedOut,
+  uploadImageMulter.fields([
+    { name: "profileImage", maxCount: 1 },
+    { name: "nidFront", maxCount: 1 },
+    { name: "nidBack", maxCount: 1 },
+  ]),
+  // validateUserRagistration,
+  // runValidation,
   handleProcessRegister
 );
 userRouter.post("/activate", isLoggedOut, handleActivateUserAccount);
@@ -53,7 +58,7 @@ userRouter.put(
 //   "/ban-user/:id([0-9a-fA-F]{24})",
 //   isLoggedIn,
 //   isAdmin,
-//   handleBanUserById
+//   handleBanUserById 
 // );
 // userRouter.put(
 //   "/unban-user/:id([0-9a-fA-F]{24})",

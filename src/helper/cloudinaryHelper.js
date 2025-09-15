@@ -1,4 +1,18 @@
 const cloudinary = require("../config/cloudinary");
+const streamifier = require("streamifier");
+
+const uploadBufferToCloudinary = (buffer, folder) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
+    );
+    streamifier.createReadStream(buffer).pipe(stream);
+  });
+};
 
 const publicIdWithoutExtensionFromUrl = async (imageUrl) => {
   const pathSegments = imageUrl.split("/");
@@ -28,4 +42,8 @@ const deleteFileFromCloudinary = async (publicId, folderName, modelName) => {
   }
 };
 
-module.exports = { publicIdWithoutExtensionFromUrl, deleteFileFromCloudinary };
+module.exports = {
+  uploadBufferToCloudinary,
+  publicIdWithoutExtensionFromUrl,
+  deleteFileFromCloudinary,
+};
