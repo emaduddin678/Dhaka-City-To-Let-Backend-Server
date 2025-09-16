@@ -2,11 +2,10 @@ require("dotenv").config();
 
 const serverPort = process.env.SERVER_PORT || 3000;
 const mongodbURL =
-  process.env.MONGODB_ATLAS_URL || "mongodb://localhost:27017/ecommerceMernsDB";
+  process.env.MONGODB_ATLAS_URL || "mongodb://localhost:27017/tolet";
 
 const defaultImagePath =
-  process.env.DEFAULT_USER_IMAGE_PATH ||
-  "public/images/users/default.jpg";
+  process.env.DEFAULT_USER_IMAGE_PATH || "public/images/users/default.jpg";
 
 const jwtActivationKey =
   process.env.JWT_ACTIVATION_KEY || "I$CREATED_THIS@ACTIVATION%KEY%";
@@ -19,6 +18,7 @@ const jwtResetPasswordKey =
 const smtpUsername = process.env.SMTP_USERNAME || "";
 const smtpPassword = process.env.SMTP_PASSWORD || "";
 const serverURL = process.env.SERVER_URL || "";
+const clientURL = process.env.CLIENT_URL || ""; 
 
 module.exports = {
   serverPort,
@@ -27,6 +27,7 @@ module.exports = {
   jwtActivationKey,
   smtpUsername,
   smtpPassword,
+  clientURL,
   serverURL,
   jwtAccessKey,
   jwtRefreshKey,

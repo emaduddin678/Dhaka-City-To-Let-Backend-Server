@@ -1,26 +1,45 @@
 const { Schema, model } = require("mongoose");
 const bcrypt = require("bcryptjs");
-const { defaultImagePath } = require("../secret.js");
+
+// Reusable address schema
+const addressSchema = new Schema(
+  {
+    division: { type: String, trim: true },
+    district: { type: String, trim: true },
+    upazila: { type: String, trim: true },
+    postcode: { type: String, trim: true },
+    cityCorp: { type: String, trim: true },
+    dhakaCitySubArea: { type: String, trim: true },
+    addressLine: { type: String, trim: true },
+  },
+  { _id: false }
+);
 
 const userSchema = new Schema(
   {
-    name: {
+    firstName: {
       type: String,
-      required: [true, "User name is required"],
+      required: [true, "First name is required"],
       trim: true,
-      minlength: [4, "User name must be at least 4 characters"],
-      maxlength: [31, "User name must be at most 31 characters"],
+      minlength: [2, "First name must be at least 2 characters"],
+      maxlength: [50, "First name must be at most 50 characters"],
+    },
+    lastName: {
+      type: String,
+      required: [true, "Last name is required"],
+      trim: true,
+      minlength: [2, "Last name must be at least 2 characters"],
+      maxlength: [50, "Last name must be at most 50 characters"],
     },
     email: {
       type: String,
       required: [true, "Email is required"],
-      trim: true,
       unique: true,
       lowercase: true,
+      trim: true,
       validate: {
-        validator: function (v) {
-          return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,})+$/.test(v);
-        },
+        validator: (v) =>
+          /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,})+$/.test(v),
         message: "Please provide a valid email address",
       },
     },
@@ -30,22 +49,137 @@ const userSchema = new Schema(
       minlength: [8, "Password must be at least 8 characters"],
       set: (v) => bcrypt.hashSync(v, bcrypt.genSaltSync(10)),
     },
-    image: {
-      // type: Buffer,
-      // contentType: String,
-      // required: [true, "User Image is required"],
+    phoneNumber: {
       type: String,
-      default: defaultImagePath,
+      required: [true, "Phone number is required"],
+      trim: true,
+      validate: {
+        validator: (v) => /^01[3-9]\d{8}$/.test(v), // ✅ BD mobile numbers (11 digits, starts 013–019)
+        message: "Enter a valid Bangladeshi mobile number (e.g., 017XXXXXXXX)",
+      },
     },
-    address: {
+
+    emergencyContact: {
       type: String,
-      required: [true, "User address is required"],
-      minlength: [4, "Address can be at minimum 4 characters"],
+      trim: true,
+      validate: {
+        validator: function (v) {
+          if (!v) return true; // optional field
+          return /^01[3-9]\d{8}$/.test(v);
+        },
+        message: "Enter a valid Bangladeshi emergency contact number",
+      },
     },
-    phone: {
+
+    nidNumber: {
       type: String,
-      required: [true, "User phone is required"],
+      trim: true,
+      validate: {
+        validator: (v) => /^[0-9]{10,17}$/.test(v), // ✅ 10–17 digits
+        message: "Enter a valid NID number (10–17 digits)",
+      },
     },
+
+    profileImage: {
+      type: String,
+      required: [true, "Profile image is required"],
+      validate: {
+        validator: function (v) {
+          if (!v) return true; // optional
+          return /^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)$/i.test(v);
+        },
+        message: "Profile image must be a valid image URL",
+      },
+    },
+
+    nidFront: {
+      type: String,
+      required: [true, "NID front image is required"],
+      validate: {
+        validator: function (v) {
+          if (!v) return true;
+          return /^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)$/i.test(v);
+        },
+        message: "NID front must be a valid image URL",
+      },
+    },
+
+    nidBack: {
+      type: String,
+      required: [true, "NID back image is required"],
+      validate: {
+        validator: function (v) {
+          if (!v) return true;
+          return /^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)$/i.test(v);
+        },
+        message: "NID back must be a valid image URL",
+      },
+    },
+
+    isTenant: {
+      type: Boolean,
+      default: false,
+    },
+
+    isOwner: {
+      type: Boolean,
+      default: false,
+    },
+
+    presentAddress: {
+      type: addressSchema,
+      required: [true, "Present address is required"],
+    },
+
+    permanentAddress: {
+      type: addressSchema,
+      required: [true, "Permanent address is required"],
+    },
+
+    occupation: {
+      type: String,
+      enum: [
+        "student",
+        "service-private",
+        "government-job",
+        "business",
+        "doctor",
+        "engineer",
+        "teacher",
+        "driver",
+        "housewife",
+        "freelancer",
+        "retired",
+        "unemployed",
+        "other",
+      ],
+      trim: true,
+      required: [true, "Occupation is required"],
+    },
+
+    organizationName: {
+      type: String,
+      trim: true,
+      minlength: [2, "Organization name must be at least 2 characters"],
+      maxlength: [100, "Organization name must be at most 100 characters"],
+    },
+
+    position: {
+      type: String,
+      trim: true,
+      minlength: [2, "Position must be at least 2 characters"],
+      maxlength: [100, "Position must be at most 100 characters"],
+    },
+
+    agreeTerms: {
+      type: Boolean,
+      required: [true, "You must agree to the terms"],
+      validate: {
+        validator: (v) => v === true,
+        message: "You must agree to the terms",
+      },
+    },
+
     isAdmin: {
       type: Boolean,
       default: false,
@@ -57,6 +191,5 @@ const userSchema = new Schema(
   },
   { timestamps: true }
 );
-
 const User = model("Users", userSchema);
 module.exports = User;

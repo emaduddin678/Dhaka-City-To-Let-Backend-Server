@@ -26,7 +26,7 @@ const userRouter = express.Router();
 
 userRouter.post(
   "/process-register",
-  // isLoggedOut,
+  isLoggedOut,
   uploadImageMulter.fields([
     { name: "profileImage", maxCount: 1 },
     { name: "nidFront", maxCount: 1 },
@@ -36,8 +36,13 @@ userRouter.post(
   // runValidation,
   handleProcessRegister
 );
-userRouter.post("/activate", isLoggedOut, handleActivateUserAccount);
-userRouter.get("/", isLoggedIn, isAdmin, handleGetUsers);
+userRouter.get("/activate/:token", isLoggedOut, handleActivateUserAccount);
+userRouter.get(
+  "/",
+  isLoggedIn,
+  // isAdmin,
+  handleGetUsers
+);
 userRouter.get("/:id([0-9a-fA-F]{24})", isLoggedIn, handleGetUserById);
 userRouter.delete("/:id([0-9a-fA-F]{24})", isLoggedIn, handleDeleteUserById);
 userRouter.put(
@@ -58,7 +63,7 @@ userRouter.put(
 //   "/ban-user/:id([0-9a-fA-F]{24})",
 //   isLoggedIn,
 //   isAdmin,
-//   handleBanUserById 
+//   handleBanUserById
 // );
 // userRouter.put(
 //   "/unban-user/:id([0-9a-fA-F]{24})",

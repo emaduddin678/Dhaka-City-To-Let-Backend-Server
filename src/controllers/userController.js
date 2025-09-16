@@ -1,18 +1,19 @@
 const createError = require("http-errors");
-const jwt = require("jsonwebtoken");
 const path = require("path");
 const fs = require("fs");
 
-const User = require("../models/userModel");
-const { successResponse } = require("./responseController");
-const { findWithId } = require("../services/findItem");
-const deleteImage = require("../helper/deleteImage");
+const jwt = require("jsonwebtoken");
 const { createJSONWebToken } = require("../helper/jsonwebtoken");
 const {
   jwtActivationKey,
   serverURL,
   jwtResetPasswordKey,
+  clientURL,
 } = require("../secret");
+const User = require("../models/userModel");
+const { successResponse } = require("./responseController");
+const { findWithId } = require("../services/findItem");
+const deleteImage = require("../helper/deleteImage");
 const emailWithNodeMailer = require("../helper/email");
 const bcrypt = require("bcryptjs");
 const checkUserExists = require("../helper/checkUserExists");
@@ -94,24 +95,28 @@ const handleDeleteUserById = async (req, res, next) => {
   }
 };
 
-
 const handleProcessRegister = async (req, res, next) => {
   try {
     const {
       firstName,
       lastName,
       email,
-      password,
       phoneNumber,
-      address,
+      emergencyContact,
+      password,
+      confirmPassword,
+      permanentAddressOption,
+      nidNumber,
       occupation,
       organizationName,
       position,
     } = req.body;
-
+    if (password !== confirmPassword) {
+      throw createError(400, "Passwords do not match");
+    }
     // ✅ Check if user already exists
     const userExists = await checkUserExists(email);
-    if (userExists) {
+    if (!userExists) {
       throw createError(
         409,
         "User with this email already exists. Please login"
@@ -131,7 +136,13 @@ const handleProcessRegister = async (req, res, next) => {
       }
     }
     console.log("Uploaded Images:", uploadedImages);
-
+    // ✅ Ensure all required files are present
+    const requiredFiles = ["profileImage", "nidFront", "nidBack"];
+    for (const field of requiredFiles) {
+      if (!uploadedImages[field]) {
+        throw createError(400, `${field} image is required`);
+      }
+    }
     // ✅ Convert boolean strings to actual booleans
     const isTenant = req.body.isTenant === "true" || req.body.isTenant === true;
     const isOwner = req.body.isOwner === "true" || req.body.isOwner === true;
@@ -156,10 +167,12 @@ const handleProcessRegister = async (req, res, next) => {
       email,
       password,
       phoneNumber,
-      address,
+      emergencyContact,
+      nidNumber,
       ...uploadedImages,
       isTenant,
       isOwner,
+      permanentAddressOption,
       presentAddress,
       permanentAddress,
       occupation,
@@ -167,6 +180,7 @@ const handleProcessRegister = async (req, res, next) => {
       position,
       agreeTerms,
     };
+    console.log("Token Payload:", tokenPayload);
 
     const token = createJSONWebToken(tokenPayload, jwtActivationKey, "10m");
 
@@ -182,7 +196,6 @@ const handleProcessRegister = async (req, res, next) => {
       .replace("{{activationLink}}", `${serverURL}/api/users/activate/${token}`)
       .replace("{{year}}", new Date().getFullYear());
 
-    console.log(template);
     const emailData = {
       email,
       subject: "Account Activation Email",
@@ -201,8 +214,77 @@ const handleProcessRegister = async (req, res, next) => {
     next(error);
   }
 };
-
 const handleActivateUserAccount = async (req, res, next) => {
+  try {
+    console.log("Activation endpoint hit");
+    const token = req.params.token;
+    if (!token) throw createError(404, "Token not found!");
+    const failedTemplate = path.join(
+      __dirname,
+      "../../emailTemplates/activationFailed.html"
+    );
+    let failedHtmlTemplate = fs.readFileSync(failedTemplate, "utf-8");
+    let failedHtmlTemplateData;
+    // clear extraMessage by default
+    failedHtmlTemplateData = failedHtmlTemplate.replace("{{extraMessage}}", "");
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, jwtActivationKey);
+    } catch (error) {
+      if (error.name === "TokenExpiredError") {
+        failedHtmlTemplateData = failedHtmlTemplate
+          .replace("{{FailedMsg}}", "Activation link expired")
+          .replace("{{extraMessage}}", "Account Activation Failed")
+          .replace("{{redirectUrl}}", "http://localhost:5173/auth/login");
+        return res.send(failedHtmlTemplateData);
+      }
+      if (error.name === "JsonWebTokenError") {
+        failedHtmlTemplateData = failedHtmlTemplate
+          .replace("{{FailedMsg}}", "Invalid activation link")
+          .replace("{{extraMessage}}", "Account Activation Failed")
+          .replace("{{redirectUrl}}", "http://localhost:5173/auth/login");
+        return res.send(failedHtmlTemplateData);
+      }
+      throw error;
+    }
+    console.log("Decoded Token:", decoded);
+    const userExists = await User.exists({ email: decoded.email });
+    console.log(userExists);
+    if (userExists) {
+      console.log("User already activated");
+      failedHtmlTemplateData = failedHtmlTemplate
+        .replace(
+          "{{FailedMsg}}",
+          "User Account With This Email is  Already Activated."
+        )
+        .replace("{{extraMessage}}", "Please Login Instead.")
+        .replace("{{redirectUrl}}", "http://localhost:5173/auth/login");
+      return res.send(failedHtmlTemplateData);
+    }
+    console.log("User not activated");
+
+    const user = await User.create(decoded);
+
+    const template = path.join(
+      __dirname,
+      "../../emailTemplates/accountRegistered.html"
+    );
+    let emailHtmlTemplate = fs.readFileSync(template, "utf-8");
+
+    const emailHtmlTemplateData = emailHtmlTemplate.replace(
+      "{{redirectUrl}}",
+      clientURL
+    );
+
+    // ✅ Return HTML that closes the window
+    return res.send(emailHtmlTemplateData);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const handleActivateUserAccounta = async (req, res, next) => {
   try {
     const token = req.body.token;
     console.log(token);

@@ -11,6 +11,7 @@ const { errorResponse } = require("./controllers/responseController");
 const authRouter = require("./routers/authRouter");
 const categoryRouter = require("./routers/categoryRouter");
 const productRouter = require("./routers/ProductRouter");
+const multer = require("multer");
 
 const app = express();
 
@@ -47,15 +48,24 @@ app.get("/test", rateLimiter, (req, res) => {
 app.use((req, res, next) => {
   next(createError(404, "route not found->client error handled"));
 });
-
-// server error handling => all the errors
 app.use((err, req, res, next) => {
-  // return res.status(err.status || 500).json({
-  //   success: false,
-  //   message: err.message,
-  // });
-
-  return errorResponse(res, { statusCode: err.status, message: err.message });
+  if (err instanceof multer.MulterError) {
+    if (err.code === "LIMIT_UNEXPECTED_FILE") {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid file type for ${err.field}. Only jpg, jpeg, png, webp, gif are allowed.`,
+      });
+    }
+    return res.status(400).json({ success: false, message: err.message });
+  }
+  if (err) {
+    return res.status(err.status || 500).json({
+      success: false,
+      message: err.message || "Something went wrong",
+    });
+  }
+  next();
 });
+
 
 module.exports = app;
