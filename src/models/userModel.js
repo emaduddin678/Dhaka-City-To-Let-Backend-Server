@@ -38,8 +38,7 @@ const userSchema = new Schema(
       lowercase: true,
       trim: true,
       validate: {
-        validator: (v) =>
-          /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,})+$/.test(v),
+        validator: (v) => /^[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}$/.test(v),
         message: "Please provide a valid email address",
       },
     },
@@ -166,6 +165,7 @@ const userSchema = new Schema(
 
     position: {
       type: String,
+      required: [true, "Position is required"],
       trim: true,
       minlength: [2, "Position must be at least 2 characters"],
       maxlength: [100, "Position must be at most 100 characters"],

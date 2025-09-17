@@ -20,6 +20,7 @@ authRouter.post(
   isLoggedOut,
   handleLogin
 );
+authRouter.get("/check-auth/me", isLoggedIn, handleRefreshToken);
 authRouter.post("/logout", isLoggedIn, handleLogout);
 authRouter.get("/refresh-token", handleRefreshToken);
 authRouter.get("/protected", handleProtectedRoute);

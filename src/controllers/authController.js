@@ -27,33 +27,20 @@ const handleLogin = async (req, res, next) => {
 
     const isPasswordMatch = await bcrypt.compare(password, user.password);
     if (!isPasswordMatch) {
-      throw createError(401, "Emal/password does not match!");
+      throw createError(401, "Authentication Failed!");
     }
     // isBanned
     if (user.isBanned) {
       throw createError(403, "You are Banned. Please contact authority");
     }
     // console.log(user)
-    // console.log({user})
 
     // token, cookie
     const accessToken = createJSONWebToken({ user }, jwtAccessKey, "5m");
-    // res.cookie("accessToken", accessToken, {
-    //   maxAge: 5 * 60 * 1000,
-    //   httpOnly: true,
-    //   // secure: true,
-    //   sameSite: "none",
-    // });
     setAccessTokenCookie(res, accessToken);
 
     // refresh token, cookie
     const refreshToken = createJSONWebToken({ user }, jwtRefreshKey, "7d");
-    // res.cookie("refreshToken", refreshToken, {
-    //   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    //   httpOnly: true,
-    //   // secure: true,
-    //   sameSite: "none",
-    // });
     setRefreshTokenCookie(res, refreshToken);
 
     // user without password
@@ -85,6 +72,22 @@ const handleLogout = async (req, res, next) => {
     next(error);
   }
 };
+const checkAuth = async (req, res, next) => {
+  try {
+    const me = await User.findById(req.user.user._id).select("-password");
+    if (!me) {
+      // User ID was valid in token, but no longer exists in DB
+      throw createError(404, "User not found. Please login again.");
+    }
+    return successResponse(res, {
+      statusCode: 200,
+      message: "Current user fetched successfully",
+      payload: { me },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 const handleRefreshToken = async (req, res, next) => {
   try {
     const oldRefreshToken = req.cookies.refreshToken;
@@ -100,7 +103,7 @@ const handleRefreshToken = async (req, res, next) => {
     const newUsers = {};
     newUsers.user = decodedToken.user;
     // const newUser = decodedToken.user;
-    
+
     // token, cookie
     const accessToken = createJSONWebToken(newUsers, jwtAccessKey, "5m");
 

@@ -9,6 +9,8 @@ const {
   serverURL,
   jwtResetPasswordKey,
   clientURL,
+  jwtAccessKey,
+  jwtRefreshKey,
 } = require("../secret");
 const User = require("../models/userModel");
 const { successResponse } = require("./responseController");
@@ -30,6 +32,10 @@ const {
   resetPassword,
 } = require("../services/userService");
 const { uploadBufferToCloudinary } = require("../helper/cloudinaryHelper");
+const {
+  setAccessTokenCookie,
+  setRefreshTokenCookie,
+} = require("../helper/cookie");
 // const mongoose = require("mongoose");
 // const fs = require("fs").promises;
 
@@ -116,7 +122,8 @@ const handleProcessRegister = async (req, res, next) => {
     }
     // ✅ Check if user already exists
     const userExists = await checkUserExists(email);
-    if (!userExists) {
+    console.log("User Exists:", userExists);
+    if (userExists) {
       throw createError(
         409,
         "User with this email already exists. Please login"
@@ -251,7 +258,7 @@ const handleActivateUserAccount = async (req, res, next) => {
     console.log("Decoded Token:", decoded);
     const userExists = await User.exists({ email: decoded.email });
     console.log(userExists);
-    if (userExists) {
+    if (!userExists) {
       console.log("User already activated");
       failedHtmlTemplateData = failedHtmlTemplate
         .replace(
@@ -264,7 +271,25 @@ const handleActivateUserAccount = async (req, res, next) => {
     }
     console.log("User not activated");
 
-    const user = await User.create(decoded);
+    // const user = await User.create(decoded);
+    console.log("Created User:");
+    if ("user") {
+      // ✅ Generate tokens
+      const accessToken = createJSONWebToken(
+        { id: userExists._id, email: userExists.email },
+        jwtAccessKey,
+        "5m"
+      );
+      const refreshToken = createJSONWebToken(
+        { id: userExists._id, email: userExists.email },
+        jwtRefreshKey,
+        "7d"
+      );
+
+      // ✅ Set cookies
+      setAccessTokenCookie(res, accessToken);
+      setRefreshTokenCookie(res, refreshToken);
+    }
 
     const template = path.join(
       __dirname,
