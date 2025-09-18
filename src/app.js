@@ -12,9 +12,29 @@ const authRouter = require("./routers/authRouter");
 const categoryRouter = require("./routers/categoryRouter");
 const productRouter = require("./routers/ProductRouter");
 const multer = require("multer");
+var cors = require("cors");
+const { isProduction } = require("./secret");
 
 const app = express();
 
+var whitelist = isProduction
+  ? ["https://to-let-sys.netlify.app"]
+  : ["http://localhost:5173"];
+
+var corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (whitelist.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+console.log(isProduction, process.env.NODE_ENV);
 const rateLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
   max: 5,
@@ -23,7 +43,13 @@ const rateLimiter = rateLimit({
 
 app.use(cookieParser());
 app.use(xssClean());
-app.use(morgan("dev"));
+// app.use(morgan("dev"));
+if (isProduction) {
+  app.use(morgan("combined")); // Apache-style logs
+} else {
+  app.use(morgan("dev")); // colorful dev logs
+}
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -66,6 +92,5 @@ app.use((err, req, res, next) => {
   }
   next();
 });
-
 
 module.exports = app;

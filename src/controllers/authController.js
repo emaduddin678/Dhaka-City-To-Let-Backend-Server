@@ -14,6 +14,7 @@ const {
 const handleLogin = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+    console.log(email, password);
 
     const user = await User.findOne({ email });
 
@@ -46,7 +47,7 @@ const handleLogin = async (req, res, next) => {
     // user without password
     const userWithoutPassword = user.toObject();
     delete userWithoutPassword.password;
-
+    console.log("TEste");
     // success response
     return successResponse(res, {
       statusCode: 202,
@@ -74,6 +75,9 @@ const handleLogout = async (req, res, next) => {
 };
 const checkAuth = async (req, res, next) => {
   try {
+    console.log("Check auth called");
+
+    return;
     const me = await User.findById(req.user.user._id).select("-password");
     if (!me) {
       // User ID was valid in token, but no longer exists in DB
@@ -90,11 +94,13 @@ const checkAuth = async (req, res, next) => {
 };
 const handleRefreshToken = async (req, res, next) => {
   try {
+    // return;
+    console.log("Refresh token called");
     const oldRefreshToken = req.cookies.refreshToken;
-
+    console.log(oldRefreshToken);
     // verify the old refresh token
     const decodedToken = jwt.verify(oldRefreshToken, jwtRefreshKey);
-
+    console.log(decodedToken, decodedToken);
     if (!decodedToken) {
       throw createError(401, "Invalid refresh token. Please login again");
     }
@@ -148,6 +154,7 @@ const handleProtectedRoute = async (req, res, next) => {
 module.exports = {
   handleLogin,
   handleLogout,
+  checkAuth,
   handleRefreshToken,
   handleProtectedRoute,
 };

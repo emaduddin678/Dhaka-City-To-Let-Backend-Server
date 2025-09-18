@@ -6,21 +6,20 @@ const {
   handleLogout,
   handleRefreshToken,
   handleProtectedRoute,
+  checkAuth,
 } = require("../controllers/authController");
 const { isLoggedOut, isLoggedIn } = require("../middlewares/auth");
-const {
-  validateUserLogin,
-} = require("../validators/auth");
+const { validateUserLogin } = require("../validators/auth");
 const authRouter = express.Router();
- 
+
 authRouter.post(
   "/login",
-  validateUserLogin,
-  runValidation,
+  // validateUserLogin,
+  // runValidation,
   isLoggedOut,
   handleLogin
 );
-authRouter.get("/check-auth/me", isLoggedIn, handleRefreshToken);
+authRouter.get("/check-auth/me", isLoggedIn, checkAuth);
 authRouter.post("/logout", isLoggedIn, handleLogout);
 authRouter.get("/refresh-token", handleRefreshToken);
 authRouter.get("/protected", handleProtectedRoute);

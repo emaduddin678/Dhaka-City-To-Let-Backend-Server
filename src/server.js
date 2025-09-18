@@ -5,6 +5,9 @@ const { serverPort } = require("./secret.js");
 
 connectDatabase().then(() => {
   app.listen(serverPort, async () => {
-    logger.log("info", `server is running at http://localhost:${serverPort}`);
+    logger.log(
+      "info",
+      `server is running on port ${process.env.SERVER_PORT} in ${process.env.NODE_ENV} mode at http://localhost:${serverPort}`
+    );
   });
 });
