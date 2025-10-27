@@ -77,7 +77,6 @@ const checkAuth = async (req, res, next) => {
   try {
     console.log("Check auth called");
 
-    return;
     const me = await User.findById(req.user.user._id).select("-password");
     if (!me) {
       // User ID was valid in token, but no longer exists in DB
@@ -97,10 +96,11 @@ const handleRefreshToken = async (req, res, next) => {
     // return;
     console.log("Refresh token called");
     const oldRefreshToken = req.cookies.refreshToken;
-    console.log(oldRefreshToken);
+    // console.log(oldRefreshToken);
+    // if (!oldRefreshToken) throw createError(401, "No refresh token");
     // verify the old refresh token
     const decodedToken = jwt.verify(oldRefreshToken, jwtRefreshKey);
-    console.log(decodedToken, decodedToken);
+    // console.log(decodedToken, decodedToken);
     if (!decodedToken) {
       throw createError(401, "Invalid refresh token. Please login again");
     }
@@ -112,8 +112,10 @@ const handleRefreshToken = async (req, res, next) => {
 
     // token, cookie
     const accessToken = createJSONWebToken(newUsers, jwtAccessKey, "5m");
+    const newRefreshToken = createJSONWebToken(newUsers, jwtRefreshKey, "7d");
 
     setAccessTokenCookie(res, accessToken);
+    setRefreshTokenCookie(res, newRefreshToken);
 
     // success response
     return successResponse(res, {
