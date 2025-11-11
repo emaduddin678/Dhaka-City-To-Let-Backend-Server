@@ -14,6 +14,7 @@ const productRouter = require("./routers/ProductRouter");
 const multer = require("multer");
 var cors = require("cors");
 const { isProduction } = require("./secret");
+const propertyRouter = require("./routers/propertyRouter");
 
 const app = express();
 
@@ -57,6 +58,8 @@ app.use("/api/users", userRouter);
 
 app.use("/api/seed", seedRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/properties", propertyRouter);
+
 app.use("/api/categories", categoryRouter);
 app.use("/api/products", productRouter);
 

@@ -37,11 +37,11 @@ const handleLogin = async (req, res, next) => {
     // console.log(user)
 
     // token, cookie
-    const accessToken = createJSONWebToken({ user }, jwtAccessKey, "5m");
+    const accessToken = createJSONWebToken({ user }, jwtAccessKey, "25m");
     setAccessTokenCookie(res, accessToken);
 
     // refresh token, cookie
-    const refreshToken = createJSONWebToken({ user }, jwtRefreshKey, "7d");
+    const refreshToken = createJSONWebToken({ user }, jwtRefreshKey, "30d");
     setRefreshTokenCookie(res, refreshToken);
 
     // user without password
@@ -65,7 +65,7 @@ const handleLogout = async (req, res, next) => {
 
     // success response
     return successResponse(res, {
-      statusCode: 202,
+      statusCode: 200,
       message: "users logged out  successfully",
       payload: {},
     });
@@ -77,11 +77,16 @@ const checkAuth = async (req, res, next) => {
   try {
     console.log("Check auth called");
 
-    const me = await User.findById(req.user.user._id).select("-password");
+    const me = await User.findById(req.user._id).select("-password");
     if (!me) {
       // User ID was valid in token, but no longer exists in DB
       throw createError(404, "User not found. Please login again.");
     }
+    // Check if user is banned since login
+    if (me.isBanned) {
+      throw createError(403, "Your account has been banned.");
+    }
+
     return successResponse(res, {
       statusCode: 200,
       message: "Current user fetched successfully",
@@ -96,6 +101,10 @@ const handleRefreshToken = async (req, res, next) => {
     // return;
     console.log("Refresh token called");
     const oldRefreshToken = req.cookies.refreshToken;
+    if (!oldRefreshToken) {
+      throw createError(401, "Refresh token not found. Please login again.");
+    }
+
     // console.log(oldRefreshToken);
     // if (!oldRefreshToken) throw createError(401, "No refresh token");
     // verify the old refresh token
@@ -111,19 +120,22 @@ const handleRefreshToken = async (req, res, next) => {
     // const newUser = decodedToken.user;
 
     // token, cookie
-    const accessToken = createJSONWebToken(newUsers, jwtAccessKey, "5m");
-    const newRefreshToken = createJSONWebToken(newUsers, jwtRefreshKey, "7d");
+    const accessToken = createJSONWebToken(newUsers, jwtAccessKey, "25m");
+    const newRefreshToken = createJSONWebToken(newUsers, jwtRefreshKey, "30d");
 
     setAccessTokenCookie(res, accessToken);
     setRefreshTokenCookie(res, newRefreshToken);
 
     // success response
     return successResponse(res, {
-      statusCode: 202,
-      message: "new access token is generated successfully",
+      statusCode: 200,
+      message: "Token refreshed successfully",
       payload: {},
     });
   } catch (error) {
+    // Clear cookies on refresh failure
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
     next(error);
   }
 };
@@ -136,7 +148,7 @@ const handleProtectedRoute = async (req, res, next) => {
     const decodedToken = jwt.verify(accessToken, jwtAccessKey);
 
     if (!decodedToken) {
-      throw createError(
+      throw createError( 
         401,
         "Invalid access token in protected Route. Please login again"
       );
@@ -145,7 +157,7 @@ const handleProtectedRoute = async (req, res, next) => {
     // success response
     return successResponse(res, {
       statusCode: 202,
-      message: "Protected resources accessed successfully",
+      message: "Protected resources accessed successfully", 
       payload: {},
     });
   } catch (error) {

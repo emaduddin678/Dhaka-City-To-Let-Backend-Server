@@ -1,6 +1,6 @@
 const express = require("express");
 
-const runValidation = require("../validators");
+// const runValidation = require("../validators");
 const {
   handleLogin,
   handleLogout,
