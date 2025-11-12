@@ -86,7 +86,6 @@ const checkAuth = async (req, res, next) => {
     if (me.isBanned) {
       throw createError(403, "Your account has been banned.");
     }
-
     return successResponse(res, {
       statusCode: 200,
       message: "Current user fetched successfully",
@@ -148,7 +147,7 @@ const handleProtectedRoute = async (req, res, next) => {
     const decodedToken = jwt.verify(accessToken, jwtAccessKey);
 
     if (!decodedToken) {
-      throw createError( 
+      throw createError(
         401,
         "Invalid access token in protected Route. Please login again"
       );
@@ -157,7 +156,7 @@ const handleProtectedRoute = async (req, res, next) => {
     // success response
     return successResponse(res, {
       statusCode: 202,
-      message: "Protected resources accessed successfully", 
+      message: "Protected resources accessed successfully",
       payload: {},
     });
   } catch (error) {
