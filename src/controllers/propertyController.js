@@ -6,14 +6,14 @@ const PropertyModel = require("../models/proppertyModel");
 // @access  Private (Owner only)
 const createProperty = async (req, res) => {
   try {
-    setTimeout(() => {
-      res.status(201).json({
-        success: true,
-        message: "Property created successfully",
-        payload: { property: { ...req.body } },
-      });
-    }, 3000);
-    return;
+    // setTimeout(() => {
+    //   res.status(400).json({
+    //     success: false,
+    //     message: "Property not created successfully",
+    //     payload: { property: { ...req.body } },
+    //   });
+    // }, 1000);
+    // return;
     const {
       title,
       description,
@@ -31,6 +31,8 @@ const createProperty = async (req, res) => {
       bathrooms,
       floorNumber,
       flatNumber,
+      drawingRoom,
+      diningRoom,
       balconies,
     } = req.body;
 
@@ -103,6 +105,8 @@ const createProperty = async (req, res) => {
       bathrooms,
       floorNumber,
       flatNumber,
+      drawingRoom,
+      diningRoom,
       balconies,
       owner: req.user._id,
     });

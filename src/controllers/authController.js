@@ -102,10 +102,10 @@ const handleRefreshToken = async (req, res, next) => {
     console.log("Refresh token called");
     const oldRefreshToken = req.cookies.refreshToken;
     if (!oldRefreshToken) {
-      throw createError(401, "Refresh token not found. Please login again.");
+      throw createError(402, "Refresh token not found. Please login again.");
     }
 
-    // console.log(oldRefreshToken);
+    console.log("oldRefreshToken");
     // if (!oldRefreshToken) throw createError(401, "No refresh token");
     // verify the old refresh token
     const decodedToken = jwt.verify(oldRefreshToken, jwtRefreshKey);

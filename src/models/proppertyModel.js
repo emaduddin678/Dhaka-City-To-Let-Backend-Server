@@ -152,6 +152,14 @@ const propertySchema = new Schema(
       trim: true,
       default: "A",
     },
+    drawingRoom: {
+      type: Boolean,
+      default: false,
+    },
+    diningRoom: {
+      type: Boolean,
+      default: false,
+    },
 
     balconies: {
       type: Number,

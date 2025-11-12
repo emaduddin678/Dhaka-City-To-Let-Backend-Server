@@ -71,7 +71,7 @@ app.get("/test", rateLimiter, (req, res) => {
   res.status(200).send({
     message: "api testing is working",
   });
-});
+}); 
 
 // client error handling
 app.use((req, res, next) => {
