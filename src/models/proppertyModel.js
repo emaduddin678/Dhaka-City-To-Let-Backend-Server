@@ -182,7 +182,7 @@ const propertySchema = new Schema(
       default: [],
       validate: {
         validator: function (v) {
-          return v.length <= 6;
+          return v.length <= 7;
         },
         message: "Cannot upload more than 6 images",
       },
