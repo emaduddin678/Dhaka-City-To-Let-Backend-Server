@@ -13,8 +13,9 @@ const isLoggedIn = async (req, res, next) => {
     if (!decoded) {
       throw createError(401, "Invalid access token. Please login again.");
     }
+    console.log("Decoded Token in isLoggedIn Middleware:", decoded);
     // req.body.userId = decoded._id;
-    req.user = decoded.user;
+    req.user = decoded;
 
     next();
   } catch (error) {

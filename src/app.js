@@ -62,7 +62,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/properties", propertyRouter);
 
 app.use("/api/categories", categoryRouter);
-app.use("/api/products", productRouter);
+app.use("/api/products", productRouter); 
 
 app.get("/", (req, res) => {
   res.send("Welcome to server");

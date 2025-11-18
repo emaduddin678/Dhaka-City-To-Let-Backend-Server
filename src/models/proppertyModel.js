@@ -187,6 +187,8 @@ const propertySchema = new Schema(
         message: "Cannot upload more than 6 images",
       },
     },
+    likesCount: { type: Number, default: 0 },
+    visitsCount: { type: Number, default: 0 },
 
     // Status & Visibility
     isActive: {

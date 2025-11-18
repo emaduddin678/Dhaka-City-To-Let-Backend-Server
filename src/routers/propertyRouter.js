@@ -12,6 +12,19 @@ const {
   createMultipleProperties,
   getPropertyByPropertyId,
 } = require("../controllers/propertyController");
+const {
+  likeProperty,
+  unlikeProperty,
+  createVisitRequest,
+  getAvailableSlots,
+  updateVisitStatus,
+  getUserLikedProperties,
+  getPropertyLikes,
+  getUserVisits,
+  getPropertyVisits,
+  cancelVisit,
+} = require("../controllers/propertyLikeVisitController.js");
+
 const { isLoggedOut, isLoggedIn, isOwner } = require("../middlewares/auth.js");
 // const auth = require("../middlewares/auth.js");
 // import { validateProperty } from "../middlewares/validation.js";
@@ -36,5 +49,19 @@ propertyRouter.get("/:id", getPropertyById); // Get property by ID
 propertyRouter.put("/:id", isOwner, updateProperty); // Update property
 propertyRouter.delete("/:id", isOwner, deleteProperty); // Delete property
 propertyRouter.patch("/:id/toggle-status", isOwner, togglePropertyStatus); // Activate/Deactivate
+
+// ---------------- Like routes ----------------
+propertyRouter.post("/:propertyId/like", likeProperty); // Like property
+propertyRouter.delete("/:propertyId/unlike", unlikeProperty); // Unlike property
+propertyRouter.get("/:propertyId/likes", getPropertyLikes); // Get all likes for property
+propertyRouter.get("/user/:userId/liked-properties", getUserLikedProperties); // Get user's liked properties
+
+// ---------------- Visit routes ----------------
+propertyRouter.post("/:propertyId/visits", createVisitRequest); // Create visit request
+propertyRouter.get("/:propertyId/visits", getPropertyVisits); // Get property visits
+propertyRouter.get("/:propertyId/visits/available-slots", getAvailableSlots); // Check availability
+propertyRouter.get("/user/:userId/visits", getUserVisits); // Get user's visit requests
+propertyRouter.patch("/visits/:visitId/status", isOwner, updateVisitStatus); // Owner updates visit status
+propertyRouter.delete("/visits/:visitId", cancelVisit); // Cancel visit
 
 module.exports = propertyRouter;

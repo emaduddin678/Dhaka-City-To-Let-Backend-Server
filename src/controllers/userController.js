@@ -167,12 +167,16 @@ const handleProcessRegister = async (req, res, next) => {
         ? JSON.parse(req.body.permanentAddress)
         : req.body.permanentAddress;
 
+
+    // ✅ FIXED: Hash password before storing in JWT
+    const hashedPassword = bcrypt.hashSync(password, bcrypt.genSaltSync(10));
+
     // ✅ Create JWT payload
     const tokenPayload = {
       firstName,
       lastName,
       email,
-      password,
+      password: hashedPassword,
       phoneNumber,
       emergencyContact,
       nidNumber,
@@ -190,6 +194,7 @@ const handleProcessRegister = async (req, res, next) => {
     console.log("Token Payload:", tokenPayload);
 
     const token = createJSONWebToken(tokenPayload, jwtActivationKey, "10m");
+    console.log("Activation Token:", token);
 
     const template = path.join(
       __dirname,
@@ -258,7 +263,7 @@ const handleActivateUserAccount = async (req, res, next) => {
     console.log("Decoded Token:", decoded);
     const userExists = await User.exists({ email: decoded.email });
     console.log(userExists);
-    if (!userExists) {
+    if (userExists) {
       console.log("User already activated");
       failedHtmlTemplateData = failedHtmlTemplate
         .replace(
@@ -272,18 +277,22 @@ const handleActivateUserAccount = async (req, res, next) => {
     console.log("User not activated");
 
     // const user = await User.create(decoded);
+
+    // Create new user
+    const newUser = await User.create(decoded);
+
     console.log("Created User:");
-    if ("user") {
+    if (newUser) {
       // ✅ Generate tokens
       const accessToken = createJSONWebToken(
-        { id: userExists._id, email: userExists.email },
+        { id: newUser._id, email: newUser.email },
         jwtAccessKey,
-        "5m"
+        "30m"
       );
       const refreshToken = createJSONWebToken(
-        { id: userExists._id, email: userExists.email },
+        { id: newUser._id, email: newUser.email },
         jwtRefreshKey,
-        "7d"
+        "30d"
       );
 
       // ✅ Set cookies

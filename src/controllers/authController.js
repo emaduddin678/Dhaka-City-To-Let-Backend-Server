@@ -37,11 +37,19 @@ const handleLogin = async (req, res, next) => {
     // console.log(user)
 
     // token, cookie
-    const accessToken = createJSONWebToken({ user }, jwtAccessKey, "25m");
+    const accessToken = createJSONWebToken(
+      { id: user._id, email: user.email },
+      jwtAccessKey,
+      "25m"
+    );
     setAccessTokenCookie(res, accessToken);
 
     // refresh token, cookie
-    const refreshToken = createJSONWebToken({ user }, jwtRefreshKey, "30d");
+    const refreshToken = createJSONWebToken(
+      { id: user._id, email: user.email },
+      jwtRefreshKey,
+      "30d"
+    );
     setRefreshTokenCookie(res, refreshToken);
 
     // user without password
@@ -76,8 +84,8 @@ const handleLogout = async (req, res, next) => {
 const checkAuth = async (req, res, next) => {
   try {
     console.log("Check auth called");
-
-    const me = await User.findById(req.user._id).select("-password");
+    console.log("User ID from token:", req.user);
+    const me = await User.findById(req.user.id).select("-password");
     if (!me) {
       // User ID was valid in token, but no longer exists in DB
       throw createError(404, "User not found. Please login again.");
