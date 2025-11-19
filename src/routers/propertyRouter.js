@@ -23,9 +23,11 @@ const {
   getUserVisits,
   getPropertyVisits,
   cancelVisit,
+  getLikedPropertyCounts,
 } = require("../controllers/propertyLikeVisitController.js");
 
 const { isLoggedOut, isLoggedIn, isOwner } = require("../middlewares/auth.js");
+const PropertyLikeModel = require("../models/propertyLikeModel.js");
 // const auth = require("../middlewares/auth.js");
 // import { validateProperty } from "../middlewares/validation.js";
 // console.log(auth);
@@ -53,7 +55,8 @@ propertyRouter.patch("/:id/toggle-status", isOwner, togglePropertyStatus); // Ac
 // ---------------- Like routes ----------------
 propertyRouter.post("/:propertyId/like", likeProperty); // Like property
 propertyRouter.delete("/:propertyId/unlike", unlikeProperty); // Unlike property
-propertyRouter.get("/:propertyId/likes", getPropertyLikes); // Get all likes for property
+propertyRouter.get("/liked-properties/count", getLikedPropertyCounts); // Get all likes for property
+// propertyRouter.get("/:propertyId/likes", getPropertyLikes); // Get all likes for property
 propertyRouter.get("/user/:userId/liked-properties", getUserLikedProperties); // Get user's liked properties
 
 // ---------------- Visit routes ----------------

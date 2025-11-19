@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const createError = require("http-errors");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const User = require("../models/userModel");
+const UserModel = require("../models/userModel");
 const deleteImage = require("../helper/deleteImage");
 const sendEmail = require("../helper/sendEmail");
 const { jwtResetPasswordKey, clientURL } = require("../secret");
@@ -28,11 +28,11 @@ const findeUsers = async (search, limit, page) => {
     };
     const options = { password: 0 };
 
-    const users = await User.find(filter, options)
+    const users = await UserModel.find(filter, options)
       .limit(limit)
       .skip((page - 1) * limit);
 
-    const count = await User.find(filter).countDocuments();
+    const count = await UserModel.find(filter).countDocuments();
 
     if (!users || users.length === 0) throw createError(404, "no users found");
 
@@ -52,7 +52,7 @@ const findeUsers = async (search, limit, page) => {
 
 const findUserById = async (id, options = {}) => {
   try {
-    const user = await User.findById(id, options);
+    const user = await UserModel.findById(id, options);
     if (!user) {
       throw createError(404, "User not found!");
     }
@@ -67,7 +67,7 @@ const findUserById = async (id, options = {}) => {
 
 const deleteUserById = async (id, options = {}) => {
   try {
-    const existingUser = await User.findOne({
+    const existingUser = await UserModel.findOne({
       _id: id,
     });
 
@@ -79,7 +79,7 @@ const deleteUserById = async (id, options = {}) => {
       await deleteFileFromCloudinary(publicId, "users", "User");
     }
 
-    const user = await User.findByIdAndDelete({
+    const user = await UserModel.findByIdAndDelete({
       _id: id,
       isAdmin: false,
     });
@@ -115,13 +115,12 @@ const updateUserById = async (req, userId, options = {}) => {
     const image = user.image;
     const updatedImage = req.file?.path;
     if (image) {
-      
       if (image.size > 1024 * 1024 * 4) {
         throw createError(
           400,
           "Image file is too large. It must be less than 4mb"
         );
-      } 
+      }
       const publicId = await publicIdWithoutExtensionFromUrl(image);
       // console.log(image);
       await deleteFileFromCloudinary(publicId, "users", "User");
@@ -134,7 +133,7 @@ const updateUserById = async (req, userId, options = {}) => {
       updates.image = response.secure_url;
     }
 
-    const updatedUser = await User.findByIdAndUpdate(
+    const updatedUser = await UserModel.findByIdAndUpdate(
       userId,
       updates,
       updateOptions
@@ -161,7 +160,7 @@ const updateUserPasswordById = async (
   confirmedPassword
 ) => {
   try {
-    const user = await User.findOne({ email: email });
+    const user = await UserModel.findOne({ email: email });
 
     if (!user) {
       throw createError(401, "User is not found with this email!");
@@ -183,7 +182,7 @@ const updateUserPasswordById = async (
     // const updates = { $set: { password: newPassword } };
     // const updateOptions = {new: true}
 
-    const updatedUser = await User.findByIdAndUpdate(
+    const updatedUser = await UserModel.findByIdAndUpdate(
       userId,
       { password: newPassword },
       { new: true }
@@ -204,7 +203,7 @@ const updateUserPasswordById = async (
 
 const forgetPasswordByEmail = async (email) => {
   try {
-    const userData = await User.findOne({ email: email });
+    const userData = await UserModel.findOne({ email: email });
     if (!userData) {
       throw createError(
         404,
@@ -245,7 +244,7 @@ const resetPassword = async (token, password) => {
     const filter = { email: decoded.email };
     const update = { password: password };
     const options = { new: true };
-    const updatedUser = await User.findOneAndUpdate(
+    const updatedUser = await UserModel.findOneAndUpdate(
       filter,
       update,
       options
@@ -278,7 +277,7 @@ const handleUserAction = async (action, userId) => {
 
     const updateOptions = { new: true, runValidators: true, context: "query" };
 
-    const updatedUser = await User.findByIdAndUpdate(
+    const updatedUser = await UserModel.findByIdAndUpdate(
       userId,
       update,
       updateOptions

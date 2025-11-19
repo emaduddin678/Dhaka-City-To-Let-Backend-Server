@@ -24,7 +24,36 @@ const publicIdWithoutExtensionFromUrl = async (imageUrl) => {
   //   console.log(valueWithoutExtension);
   return valueWithoutExtension;
 };
+/**
+ * Extracts public_id from Cloudinary URL
+ * Example: https://res.cloudinary.com/demo/image/upload/v1234567890/users/abc123.jpg
+ * Returns: users/abc123
+ */
+const getPublicIdFromUrl = (imageUrl) => {
+  try {
+    // Split URL and find the part after 'upload/'
+    const parts = imageUrl.split("/upload/");
+    if (parts.length < 2) return null;
 
+    // Get everything after version (v1234567890/)
+    const pathAfterUpload = parts[1];
+    const pathParts = pathAfterUpload.split("/");
+
+    // Remove version if present (starts with v followed by numbers)
+    const startIndex = pathParts[0].match(/^v\d+$/) ? 1 : 0;
+
+    // Reconstruct path without file extension
+    const pathWithExtension = pathParts.slice(startIndex).join("/");
+    const publicId =
+      pathWithExtension.substring(0, pathWithExtension.lastIndexOf(".")) ||
+      pathWithExtension;
+
+    return publicId;
+  } catch (error) {
+    console.error("Error extracting public_id from URL:", error);
+    return null;
+  }
+};
 const deleteFileFromCloudinary = async (publicId, folderName, modelName) => {
   try {
     const { result } = await cloudinary.uploader.destroy(
@@ -42,8 +71,31 @@ const deleteFileFromCloudinary = async (publicId, folderName, modelName) => {
   }
 };
 
+const deleteFromCloudinary = async (publicId) => {
+  try {
+    if (!publicId) {
+      throw new Error("Public ID is required to delete from Cloudinary");
+    }
+
+    const result = await cloudinary.uploader.destroy(publicId);
+
+    if (result.result !== "ok" && result.result !== "not found") {
+      throw new Error(
+        `Image deletion failed. Cloudinary response: ${result.result}`
+      );
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Cloudinary deletion error:", error);
+    throw error;
+  }
+};
+
 module.exports = {
   uploadBufferToCloudinary,
   publicIdWithoutExtensionFromUrl,
   deleteFileFromCloudinary,
+  getPublicIdFromUrl,
+  deleteFromCloudinary,
 };

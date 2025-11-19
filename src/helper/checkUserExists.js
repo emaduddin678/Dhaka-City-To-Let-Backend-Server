@@ -1,7 +1,7 @@
-const User = require("../models/userModel");
+const UserModel = require("../models/userModel");
 
 const checkUserExists = async (email) => {
-  return await User.exists({ email: email });
+  return await UserModel.exists({ email: email });
 };
 
 module.exports = checkUserExists;

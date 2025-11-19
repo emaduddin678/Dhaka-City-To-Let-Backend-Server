@@ -2,7 +2,6 @@ const createError = require("http-errors");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
-const User = require("../models/userModel");
 const { successResponse } = require("./responseController");
 const { createJSONWebToken } = require("../helper/jsonwebtoken");
 const { jwtAccessKey, jwtRefreshKey } = require("../secret");
@@ -10,13 +9,14 @@ const {
   setAccessTokenCookie,
   setRefreshTokenCookie,
 } = require("../helper/cookie");
+const UserModel = require("../models/userModel");
 
 const handleLogin = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     console.log(email, password);
 
-    const user = await User.findOne({ email });
+    const user = await UserModel.findOne({ email });
 
     if (!user) {
       throw createError(
@@ -84,8 +84,8 @@ const handleLogout = async (req, res, next) => {
 const checkAuth = async (req, res, next) => {
   try {
     console.log("Check auth called");
-    console.log("User ID from token:", req.user);
-    const me = await User.findById(req.user.id).select("-password");
+    // console.log("User ID from token:", req.user);
+    const me = await UserModel.findById(req.user.id).select("-password");
     if (!me) {
       // User ID was valid in token, but no longer exists in DB
       throw createError(404, "User not found. Please login again.");
@@ -109,7 +109,7 @@ const handleRefreshToken = async (req, res, next) => {
     console.log("Refresh token called");
     const oldRefreshToken = req.cookies.refreshToken;
     if (!oldRefreshToken) {
-      throw createError(402, "Refresh token not found. Please login again.");
+      throw createError(401, "Refresh token not found. Please login again.");
     }
 
     console.log("oldRefreshToken");
@@ -121,15 +121,18 @@ const handleRefreshToken = async (req, res, next) => {
       throw createError(401, "Invalid refresh token. Please login again");
     }
 
-    // console.log(decodedToken)
-    const newUsers = {};
-    newUsers.user = decodedToken.user;
-    // const newUser = decodedToken.user;
-
-    // token, cookie
-    const accessToken = createJSONWebToken(newUsers, jwtAccessKey, "25m");
-    const newRefreshToken = createJSONWebToken(newUsers, jwtRefreshKey, "30d");
-
+    // ✅ FIXED: Extract id and email directly from decoded token
+    const { id, email } = decodedToken;
+    if (!id || !email) {
+      throw createError(401, "Invalid token payload. Please login again.");
+    }
+    // ✅ FIXED: Create new tokens with correct payload structure
+    const accessToken = createJSONWebToken({ id, email }, jwtAccessKey, "25m");
+    const newRefreshToken = createJSONWebToken(
+      { id, email },
+      jwtRefreshKey,
+      "30d"
+    );
     setAccessTokenCookie(res, accessToken);
     setRefreshTokenCookie(res, newRefreshToken);
 

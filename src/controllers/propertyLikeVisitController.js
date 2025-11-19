@@ -2,6 +2,48 @@ const PropertyLikeModel = require("../models/propertyLikeModel");
 const PropertyVisitModel = require("../models/propertyVisitModel");
 const PropertyModel = require("../models/proppertyModel");
 
+const getLikedPropertyCounts = async (req, res) => {
+  try {
+    const likeCounts = await PropertyLikeModel.aggregate([
+      {
+        $group: {
+          _id: "$propertyId", // group by propertyId
+          numberOfCount: { $sum: 1 }, // count likes
+        },
+      },
+      {
+        $project: {
+          propertyId: "$_id",
+          numberOfCount: 1,
+          _id: 0,
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      success: true,
+      message: "Like counts per property fetched successfully",
+      data: likeCounts,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const getPropertyLikes = async (req, res) => {
+  try {
+    const { propertyId } = req.params;
+
+    const likes = await PropertyLikeModel.find({ propertyId })
+      .populate("userId", "firstName lastName email phoneNumber profileImage")
+      .sort("-likedAt");
+    // console.log(likes);
+    res.json({ success: true, data: likes });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // LIKE CONTROLLER
 const likeProperty = async (req, res) => {
   try {
@@ -53,10 +95,6 @@ const unlikeProperty = async (req, res) => {
     if (!like) {
       return res.status(404).json({ message: "Like not found" });
     }
-
-    await PropertyModel.findByIdAndUpdate(propertyId, {
-      $inc: { likesCount: -1 },
-    });
 
     res.json({ success: true, message: "Property unliked" });
   } catch (error) {
@@ -200,7 +238,8 @@ const updateVisitStatus = async (req, res) => {
 
 const getUserLikedProperties = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.params.userId;
+    console.log(userId);
 
     const likes = await PropertyLikeModel.find({
       userId,
@@ -229,25 +268,6 @@ const getUserVisits = async (req, res) => {
       .sort("-createdAt");
 
     res.json({ success: true, data: visits });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-const getPropertyLikes = async (req, res) => {
-  try {
-    const { propertyId } = req.params;
-    // console.log(propertyId);
-    // console.log("Fetching likes for property:", propertyId);
-
-    const likes = await PropertyLikeModel.find({ propertyId : propertyId });
-    // console.log(likes);
-    // return;
-    // const likes = await PropertyLikeModel.find({ propertyId })
-    //   .populate("userId", "firstName lastName email phoneNumber profileImage")
-    //   .sort("-likedAt");
-    // console.log(likes);
-    res.json({ success: true, data: likes });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -309,4 +329,5 @@ module.exports = {
   getUserVisits,
   getPropertyVisits,
   cancelVisit,
+  getLikedPropertyCounts,
 };

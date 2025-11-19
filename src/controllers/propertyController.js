@@ -1,5 +1,5 @@
 const PropertyModel = require("../models/proppertyModel");
-// const User = require("../models/User");
+// const UserModel = require("../models/User");
 
 // @desc    Create new property
 // @route   POST /api/properties

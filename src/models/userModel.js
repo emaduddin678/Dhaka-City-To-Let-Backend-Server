@@ -1,7 +1,6 @@
 const { Schema, model } = require("mongoose");
 const bcrypt = require("bcryptjs");
 
-// Reusable address schema
 const addressSchema = new Schema(
   {
     division: { type: String, trim: true },
@@ -10,10 +9,16 @@ const addressSchema = new Schema(
     postcode: { type: String, trim: true },
     cityCorp: { type: String, trim: true },
     dhakaCitySubArea: { type: String, trim: true },
-    addressLine: { type: String, trim: true },
+    houseNumber: { type: String, trim: true },
+    roadNumber: { type: String, trim: true },
+    block: { type: String, trim: true },
+    sector: { type: String, trim: true },
+    areaName: { type: String, trim: true },
+    landmark: { type: String, trim: true },
+    googleMapsLink: { type: String, trim: true },
   },
   { _id: false }
-);
+); 
 
 const userSchema = new Schema(
   {
@@ -45,7 +50,7 @@ const userSchema = new Schema(
     password: {
       type: String,
       required: [true, "Password is required"],
-      minlength: [8, "Password must be at least 8 characters"], 
+      minlength: [8, "Password must be at least 8 characters"],
     },
     phoneNumber: {
       type: String,
@@ -190,5 +195,5 @@ const userSchema = new Schema(
   },
   { timestamps: true }
 );
-const User = model("Users", userSchema);
-module.exports = User;
+const UserModel = model("Users", userSchema);
+module.exports = UserModel;

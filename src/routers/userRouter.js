@@ -24,7 +24,6 @@ const { uploadUserImage } = require("../middlewares/uploadFile");
 const { uploadImageMulter } = require("../middlewares/uploadImageMulter");
 const userRouter = express.Router();
 
-
 userRouter.post(
   "/process-register",
   isLoggedOut,
@@ -56,7 +55,11 @@ userRouter.put(
 userRouter.put(
   "/:id([0-9a-fA-F]{24})",
   isLoggedIn,
-  uploadUserImage.single("image"),
+  uploadImageMulter.fields([
+    { name: "profileImage", maxCount: 1 },
+    { name: "nidFront", maxCount: 1 },
+    { name: "nidBack", maxCount: 1 },
+  ]),
   handleUpdateUserById
 );
 
@@ -97,9 +100,6 @@ userRouter.put(
 
 module.exports = userRouter;
 
-
-
-
 // POST route to seed properties
 userRouter.post(
   "/seed-properties",
@@ -109,7 +109,7 @@ userRouter.post(
       const referenceDir = path.join(__dirname, "../reference");
 
       const properties = await PropertyModel.find({});
-      
+
       const updatedLogs = [];
 
       for (let i = 0; i < properties.length; i++) {
@@ -130,9 +130,13 @@ userRouter.post(
             const fallbackPath = path.join(referenceDir, cat.fallback);
             if (fs.existsSync(fallbackPath)) {
               buffer = fs.readFileSync(fallbackPath);
-              console.log(`⚠️ Missing ${fileName}, used fallback ${cat.fallback}`);
+              console.log(
+                `⚠️ Missing ${fileName}, used fallback ${cat.fallback}`
+              );
             } else {
-              console.log(`❌ Missing both ${fileName} and fallback ${cat.fallback}`);
+              console.log(
+                `❌ Missing both ${fileName} and fallback ${cat.fallback}`
+              );
               continue; // skip if nothing found
             }
           }
@@ -151,7 +155,9 @@ userRouter.post(
           imagesCount: imageUrls.length,
         });
 
-        console.log(`✅ Updated property ${property._id} with ${imageUrls.length} images`);
+        console.log(
+          `✅ Updated property ${property._id} with ${imageUrls.length} images`
+        );
       }
 
       // Optional: delete reference folder

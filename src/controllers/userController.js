@@ -12,7 +12,7 @@ const {
   jwtAccessKey,
   jwtRefreshKey,
 } = require("../secret");
-const User = require("../models/userModel");
+const UserModel = require("../models/userModel");
 const { successResponse } = require("./responseController");
 const { findWithId } = require("../services/findItem");
 const deleteImage = require("../helper/deleteImage");
@@ -31,7 +31,11 @@ const {
   forgetPasswordByEmail,
   resetPassword,
 } = require("../services/userService");
-const { uploadBufferToCloudinary } = require("../helper/cloudinaryHelper");
+const {
+  uploadBufferToCloudinary,
+  getPublicIdFromUrl,
+  deleteFromCloudinary,
+} = require("../helper/cloudinaryHelper");
 const {
   setAccessTokenCookie,
   setRefreshTokenCookie,
@@ -67,7 +71,7 @@ const handleGetUserById = async (req, res, next) => {
     // const filter = {
     //   _id: id,
     // };
-    // const user = await User.find(filter);
+    // const user = await UserModel.find(filter);
 
     // finding in services for user
     const options = { password: 0 };
@@ -167,7 +171,6 @@ const handleProcessRegister = async (req, res, next) => {
         ? JSON.parse(req.body.permanentAddress)
         : req.body.permanentAddress;
 
-
     // ✅ FIXED: Hash password before storing in JWT
     const hashedPassword = bcrypt.hashSync(password, bcrypt.genSaltSync(10));
 
@@ -260,8 +263,8 @@ const handleActivateUserAccount = async (req, res, next) => {
       }
       throw error;
     }
-    console.log("Decoded Token:", decoded);
-    const userExists = await User.exists({ email: decoded.email });
+    // console.log("Decoded Token:", decoded);
+    const userExists = await UserModel.exists({ email: decoded.email });
     console.log(userExists);
     if (userExists) {
       console.log("User already activated");
@@ -276,10 +279,10 @@ const handleActivateUserAccount = async (req, res, next) => {
     }
     console.log("User not activated");
 
-    // const user = await User.create(decoded);
+    // const user = await UserModel.create(decoded);
 
     // Create new user
-    const newUser = await User.create(decoded);
+    const newUser = await UserModel.create(decoded);
 
     console.log("Created User:");
     if (newUser) {
@@ -328,7 +331,7 @@ const handleActivateUserAccounta = async (req, res, next) => {
       const decoded = jwt.verify(token, jwtActivationKey);
       if (!decoded) throw createError(404, "user was not able to verified");
 
-      const userExists = await User.exists({ email: decoded.email });
+      const userExists = await UserModel.exists({ email: decoded.email });
       if (userExists) {
         throw createError(
           409,
@@ -344,7 +347,7 @@ const handleActivateUserAccounta = async (req, res, next) => {
         decoded.image = response.secure_url;
       }
 
-      const user = await User.create(decoded);
+      const user = await UserModel.create(decoded);
 
       return successResponse(res, {
         statusCode: 201,
@@ -367,13 +370,119 @@ const handleActivateUserAccounta = async (req, res, next) => {
 
 const handleUpdateUserById = async (req, res, next) => {
   try {
+    console.log("Update user endpoint hit", req.body);
     const userId = req.params.id;
-    const options = { password: 0 };
-    const updatedUser = await updateUserById(req, userId, options);
+    // ✅ Check if user exists
+    const existingUser = await UserModel.findById(userId);
+    if (!existingUser) {
+      throw createError(404, "User not found");
+    }
+    if (req.user.id !== userId && !req.user.isAdmin) {
+      throw createError(403, "You can only update your own profile");
+    }
+
+    const {
+      firstName,
+      lastName,
+      phoneNumber,
+      emergencyContact,
+      nidNumber,
+      isTenant,
+      isOwner,
+      permanentAddressOption,
+      occupation,
+      organizationName,
+      position,
+    } = req.body;
+
+    // ✅ Prepare update object
+    const updateData = {};
+
+    // Basic fields
+    if (firstName) updateData.firstName = firstName;
+    if (lastName) updateData.lastName = lastName;
+    if (phoneNumber) updateData.phoneNumber = phoneNumber;
+    if (emergencyContact) updateData.emergencyContact = emergencyContact;
+    if (nidNumber) updateData.nidNumber = nidNumber;
+    if (occupation) updateData.occupation = occupation;
+    if (organizationName) updateData.organizationName = organizationName;
+    if (position) updateData.position = position;
+    if (permanentAddressOption)
+      updateData.permanentAddressOption = permanentAddressOption;
+
+    if (typeof isTenant !== "undefined") {
+      updateData.isTenant = isTenant === "true" || isTenant === true;
+    }
+    if (typeof isOwner !== "undefined") {
+      updateData.isOwner = isOwner === "true" || isOwner === true;
+    }
+
+    // ✅ Handle address updates
+    const presentAddress =
+      typeof req.body.presentAddress === "string"
+        ? JSON.parse(req.body.presentAddress)
+        : req.body.presentAddress;
+
+    if (presentAddress) {
+      updateData.presentAddress = presentAddress;
+    }
+    const permanentAddress =
+      typeof req.body.permanentAddress === "string"
+        ? JSON.parse(req.body.permanentAddress)
+        : req.body.permanentAddress;
+
+    if (permanentAddress) {
+      updateData.permanentAddress = permanentAddress;
+    }
+
+    // ✅ Handle image uploads to Cloudinary
+    const imageFields = ["profileImage", "nidFront", "nidBack"];
+
+    for (const fieldName of imageFields) {
+      if (req.files?.[fieldName]?.[0]) {
+        const file = req.files[fieldName][0];
+
+        // Validate file size
+        if (file.size > 4 * 1024 * 1024) {
+          throw createError(400, `${fieldName} is too large. Max size is 4MB`);
+        }
+
+        // ✅ Delete old image from Cloudinary (optional but recommended)
+        if (existingUser[fieldName]) {
+          try {
+            const publicId = getPublicIdFromUrl(existingUser[fieldName]);
+            if (publicId) {
+              await deleteFromCloudinary(publicId);
+              console.log(`✅ Deleted old ${fieldName} from Cloudinary`);
+            }
+          } catch (err) {
+            console.error(`⚠️ Failed to delete old ${fieldName}:`, err.message);
+          }
+        }
+
+        // Upload new image
+        const result = await uploadBufferToCloudinary(file.buffer, "users");
+        updateData[fieldName] = result.secure_url;
+      }
+    }
+
+    // ✅ Update user in database
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      userId,
+      { $set: updateData },
+      {
+        new: true, // Return updated document
+        runValidators: true, // Run schema validators
+      }
+    ).select("-password"); // Exclude password from response
+
+    if (!updatedUser) {
+      throw createError(404, "User not found");
+    }
 
     return successResponse(res, {
-      statusCode: 202,
-      message: "user was updated successfully",
+      statusCode: 200,
+      message: "User updated successfully",
       payload: {
         updatedUser,
       },
@@ -390,7 +499,7 @@ const handleUpdateUserById = async (req, res, next) => {
 //     const updates = { isBanned: true };
 //     const updateOptions = { new: true, runValidators: true, context: "query" };
 
-//     const updatedUser = await User.findByIdAndUpdate(
+//     const updatedUser = await UserModel.findByIdAndUpdate(
 //       userId,
 //       updates,
 //       updateOptions
@@ -418,7 +527,7 @@ const handleUpdateUserById = async (req, res, next) => {
 //     const updates = { isBanned: false };
 //     const updateOptions = { new: true, runValidators: true, context: "query" };
 
-//     const updatedUser = await User.findByIdAndUpdate(
+//     const updatedUser = await UserModel.findByIdAndUpdate(
 //       userId,
 //       updates,
 //       updateOptions

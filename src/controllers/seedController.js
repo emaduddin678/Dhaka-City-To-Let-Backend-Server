@@ -1,17 +1,17 @@
 // const createHttpError = require("http-errors");
 const data = require("../data");
 const Product = require("../models/productModel");
-const User = require("../models/userModel");
+const UserModel = require("../models/userModel");
 
 const seedUser = async (req, res, next) => {
   try {
     // deleting all existing user
     // console.log(User)
-    await User.deleteMany({});
+    await UserModel.deleteMany({});
     // console.log(User)
 
     // inserting all new user
-    const users = await User.insertMany(data.users);
+    const users = await UserModel.insertMany(data.users);
     // console.log(users)
 
     // successful response
