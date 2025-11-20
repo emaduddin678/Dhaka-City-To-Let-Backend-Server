@@ -48,7 +48,8 @@ const getPropertyLikes = async (req, res) => {
 const likeProperty = async (req, res) => {
   try {
     const { propertyId } = req.params;
-    const userId = req.user._id; // from auth middleware
+    console.log(req.user);
+    const userId = req.user.id; // from auth middleware
 
     // Check if already liked
     const existingLike = await PropertyLikeModel.findOne({
@@ -85,7 +86,7 @@ const likeProperty = async (req, res) => {
 const unlikeProperty = async (req, res) => {
   try {
     const { propertyId } = req.params;
-    const userId = req.user._id;
+    const userId = req.user.id;
 
     const like = await PropertyLikeModel.findOneAndDelete({
       propertyId,
@@ -215,7 +216,7 @@ const updateVisitStatus = async (req, res) => {
   try {
     const { visitId } = req.params;
     const { status } = req.body; // 'confirmed', 'cancelled', 'completed'
-    const userId = req.user._id;
+    const userId = req.user.id;
 
     const visit = await PropertyVisitModel.findById(visitId);
     if (!visit) {
@@ -261,7 +262,7 @@ const getUserLikedProperties = async (req, res) => {
 
 const getUserVisits = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user.id;
 
     const visits = await PropertyVisitModel.find({ tenantId: userId })
       .populate("propertyId")
@@ -289,7 +290,7 @@ const getPropertyVisits = async (req, res) => {
 const cancelVisit = async (req, res) => {
   try {
     const { visitId } = req.params;
-    const userId = req.user._id;
+    const userId = req.user.id;
 
     const visit = await PropertyVisitModel.findById(visitId);
     if (!visit) {

@@ -48,7 +48,7 @@ const createProperty = async (req, res) => {
 
     if (address.postcode) {
       existingProperty = await PropertyModel.findOne({
-        owner: req.user._id,
+        owner: req.user.id,
         "address.addressLine": address.addressLine?.trim(),
         "address.division": address.division,
         "address.district": address.district,
@@ -59,7 +59,7 @@ const createProperty = async (req, res) => {
       });
     } else {
       existingProperty = await PropertyModel.findOne({
-        owner: req.user._id,
+        owner: req.user.id,
         "address.addressLine": address.addressLine?.trim(),
         "address.division": address.division,
         "address.district": address.district,
@@ -108,7 +108,7 @@ const createProperty = async (req, res) => {
       drawingRoom,
       diningRoom,
       balconies,
-      owner: req.user._id,
+      owner: req.user.id,
     });
 
     res.status(201).json({
@@ -192,7 +192,7 @@ const createMultipleProperties = async (req, res) => {
 
       if (address.postcode) {
         existingProperty = await PropertyModel.findOne({
-          owner: req.user._id,
+          owner: req.user.id,
           "address.addressLine": address.addressLine?.trim(),
           "address.division": address.division,
           "address.district": address.district,
@@ -203,7 +203,7 @@ const createMultipleProperties = async (req, res) => {
         });
       } else {
         existingProperty = await PropertyModel.findOne({
-          owner: req.user._id,
+          owner: req.user.id,
           "address.addressLine": address.addressLine?.trim(),
           "address.division": address.division,
           "address.district": address.district,
@@ -243,7 +243,7 @@ const createMultipleProperties = async (req, res) => {
         floorNumber,
         flatNumber,
         balconies,
-        owner: req.user._id,
+        owner: req.user.id,
       });
 
       createdProperties.push(newProperty);
@@ -442,7 +442,7 @@ const updateProperty = async (req, res) => {
     }
 
     // Check ownership
-    if (property.owner.toString() !== req.user._id.toString()) {
+    if (property.owner.toString() !== req.user.id.toString()) {
       return res.status(403).json({
         success: false,
         message: "You can only update your own properties",
@@ -498,7 +498,7 @@ const deleteProperty = async (req, res) => {
     }
 
     // Check ownership
-    if (property.owner.toString() !== req.user._id.toString()) {
+    if (property.owner.toString() !== req.user.id.toString()) {
       return res.status(403).json({
         success: false,
         message: "You can only delete your own properties",
@@ -526,11 +526,11 @@ const deleteProperty = async (req, res) => {
 // @access  Private (Owner only)
 const getMyProperties = async (req, res) => {
   try {
-    console.log("Fetching properties for owner:", req.user._id);
+    console.log("Fetching properties for owner:", req.user.id);
     // return;
     const { page = 1, limit = 10, isActive } = req.query;
 
-    const filter = { owner: req.user._id };
+    const filter = { owner: req.user.id };
     if (isActive !== undefined) {
       filter.isActive = isActive === "true";
     }
@@ -584,7 +584,7 @@ const togglePropertyStatus = async (req, res) => {
     }
 
     // Check ownership
-    if (property.owner.toString() !== req.user._id.toString()) {
+    if (property.owner.toString() !== req.user.id.toString()) {
       return res.status(403).json({
         success: false,
         message: "You can only update your own properties",
