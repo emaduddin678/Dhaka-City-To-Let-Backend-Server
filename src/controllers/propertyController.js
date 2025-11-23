@@ -280,12 +280,18 @@ const getAllProperties = async (req, res) => {
       propertyFor,
       division,
       district,
+      upazila,
+      cityCorp,
+      dhakaCitySubArea,
+      postcode,
       minPrice,
       maxPrice,
       minSize,
       maxSize,
       bedrooms,
       bathrooms,
+      amenities,
+      availabilityDate,
       isActive,
       page = 1,
       limit = 10,
@@ -300,9 +306,21 @@ const getAllProperties = async (req, res) => {
     if (propertyFor) filter.propertyFor = propertyFor;
     if (division) filter["address.division"] = division;
     if (district) filter["address.district"] = district;
+    if (upazila) filter["address.upazila"] = upazila;
+    if (cityCorp) filter["address.cityCorp"] = cityCorp;
+    if (dhakaCitySubArea) filter["address.dhakaCitySubArea"] = dhakaCitySubArea;
+    if (postcode) filter["address.postcode"] = postcode;
     if (bedrooms) filter.bedrooms = { $gte: Number(bedrooms) };
     if (bathrooms) filter.bathrooms = { $gte: Number(bathrooms) };
 
+    if (amenities) {
+      const amenitiesArray = amenities.split(",");
+      // Query the 'value' field inside the amenities array
+      filter["amenities.value"] = { $all: amenitiesArray };
+    }
+    if (availabilityDate) {
+      filter.availabilityDate = { $lte: new Date(availabilityDate) };
+    }
     // Price range
     if (minPrice || maxPrice) {
       filter.price = {};
@@ -394,25 +412,48 @@ const getPropertyById = async (req, res) => {
 const getPropertyByPropertyId = async (req, res) => {
   try {
     const { propertyId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+    const query = { propertyId: { $regex: propertyId, $options: "i" } };
 
-    const property = await PropertyModel.findOne({ propertyId }).populate(
-      "owner",
-      "firstName lastName email phoneNumber profileImage presentAddress"
-    );
+    const total = await PropertyModel.countDocuments(query);
 
-    if (!property) {
+    const properties = await PropertyModel.find(query)
+      .populate(
+        "owner",
+        "firstName lastName email phoneNumber profileImage presentAddress"
+      )
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
+
+    if (!properties || properties.length === 0) {
       return res.status(404).json({
         success: false,
-        message: "Property not found",
+        message: "No property found with the given Property ID.",
+        payload: {
+          properties,
+          pagination: {
+            total,
+            propertyNumber: properties.length,
+            page: Number(page),
+            pages: Math.ceil(total / Number(limit)),
+            limit: Number(limit),
+          },
+        },
       });
     }
 
-    property.views += 1;
-    await property.save();
-
     res.status(200).json({
       success: true,
-      payload: { property },
+      payload: {
+        properties,
+        pagination: {
+          total,
+          propertyNumber: properties.length,
+          page: Number(page),
+          pages: Math.ceil(total / Number(limit)),
+          limit: Number(limit),
+        },
+      },
     });
   } catch (error) {
     console.error("Get property by propertyId error:", error);
