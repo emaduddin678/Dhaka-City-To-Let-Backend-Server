@@ -17,7 +17,7 @@ const app = express();
 
 // CORS Configuration
 const whitelist = isProduction
-  ? ["https://to-let-sys.netlify.app"]
+  ? ["https://to-let-sys.netlify.app", "http://localhost:4173"]
   : ["http://localhost:5173"];
 
 const corsOptions = {
