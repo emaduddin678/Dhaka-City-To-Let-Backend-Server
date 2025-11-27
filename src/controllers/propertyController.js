@@ -290,6 +290,10 @@ const getAllProperties = async (req, res) => {
       maxSize,
       bedrooms,
       bathrooms,
+      balconies, // ADD THIS
+      floorNumber, // ADD THIS
+      drawingRoom, // ADD THIS
+      diningRoom, // ADD THIS
       amenities,
       availabilityDate,
       isActive,
@@ -321,6 +325,21 @@ const getAllProperties = async (req, res) => {
     if (availabilityDate) {
       filter.availabilityDate = { $lte: new Date(availabilityDate) };
     }
+
+    // In your backend controller, update these filters:
+
+    // 1. Fix balconies filter (missing in your backend)
+    if (balconies) filter.balconies = { $gte: Number(balconies) };
+
+    // 2. Fix floorNumber filter (missing in your backend)
+    if (floorNumber) filter.floorNumber = Number(floorNumber);
+
+    // 3. Add drawingRoom filter (missing)
+    if (drawingRoom === "true" || drawingRoom === true)
+      filter.drawingRoom = true;
+
+    // 4. Add diningRoom filter (missing)
+    if (diningRoom === "true" || diningRoom === true) filter.diningRoom = true;
     // Price range
     if (minPrice || maxPrice) {
       filter.price = {};

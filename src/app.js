@@ -1,28 +1,26 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
-const bodyParser = require("body-parser");
 const createError = require("http-errors");
-const xssClean = require("xss-clean");
 const rateLimit = require("express-rate-limit");
 const userRouter = require("./routers/userRouter");
 const seedRouter = require("./routers/seedRouter");
-const { errorResponse } = require("./controllers/responseController");
 const authRouter = require("./routers/authRouter");
 const categoryRouter = require("./routers/categoryRouter");
 const productRouter = require("./routers/ProductRouter");
-const multer = require("multer");
-var cors = require("cors");
-const { isProduction } = require("./secret");
 const propertyRouter = require("./routers/propertyRouter");
+const multer = require("multer");
+const cors = require("cors");
+const { isProduction } = require("./secret");
 
 const app = express();
 
-var whitelist = isProduction
+// CORS Configuration
+const whitelist = isProduction
   ? ["https://to-let-sys.netlify.app"]
   : ["http://localhost:5173"];
 
-var corsOptions = {
+const corsOptions = {
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
     if (whitelist.indexOf(origin) !== -1) {
@@ -35,34 +33,42 @@ var corsOptions = {
 };
 
 app.use(cors(corsOptions));
-console.log(isProduction, process.env.NODE_ENV);
+
+// Rate Limiting
 const rateLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
+  windowMs: 1 * 60 * 1000,
   max: 5,
   message: "Too many requests from this IP, please try again later",
 });
 
+// Security headers
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  next();
+});
+
 app.use(cookieParser());
-app.use(xssClean());
-// app.use(morgan("dev"));
+
+// Logging
 if (isProduction) {
-  app.use(morgan("combined")); // Apache-style logs
+  app.use(morgan("combined"));
 } else {
-  app.use(morgan("dev")); // colorful dev logs
+  app.use(morgan("dev"));
 }
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+// Body parsing with size limits
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
+// Routes
 app.use("/api/seed", seedRouter);
-
 app.use("/api/users", userRouter);
 app.use("/api/auth", authRouter);
-
 app.use("/api/properties", propertyRouter);
-
 app.use("/api/categories", categoryRouter);
-app.use("/api/products", productRouter); 
+app.use("/api/products", productRouter);
 
 app.get("/", (req, res) => {
   res.send("Welcome to server");
@@ -72,12 +78,13 @@ app.get("/test", rateLimiter, (req, res) => {
   res.status(200).send({
     message: "api testing is working",
   });
-}); 
-
-// client error handling
-app.use((req, res, next) => {
-  next(createError(404, "route not found->client error handled"));
 });
+
+// Error handling
+app.use((req, res, next) => {
+  next(createError(404, "route not found"));
+});
+
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     if (err.code === "LIMIT_UNEXPECTED_FILE") {
