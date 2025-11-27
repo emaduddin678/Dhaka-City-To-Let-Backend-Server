@@ -1,5 +1,5 @@
 {
-  "name": "Dhaka-City-To-Let",
+  "name": "dhaka-city-to-let",
   "version": "1.0.0",
   "description": "Dhaka-City-To-Let is a MERN stack application designed for managing rental properties in Dhaka city. It provides features for property listings, user authentication, and property management.",
   "main": "server.js",
