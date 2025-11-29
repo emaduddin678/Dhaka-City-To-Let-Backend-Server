@@ -24,6 +24,7 @@ const {
   getPropertyVisits,
   cancelVisit,
   getLikedPropertyCounts,
+  updateVisitRequest,
 } = require("../controllers/propertyLikeVisitController.js");
 
 const { isLoggedOut, isLoggedIn, isOwner } = require("../middlewares/auth.js");
@@ -61,6 +62,7 @@ propertyRouter.get("/user/:userId/liked-properties", getUserLikedProperties); //
 
 // ---------------- Visit routes ----------------
 propertyRouter.post("/:propertyId/visits", createVisitRequest); // Create visit request
+propertyRouter.put("/:propertyId/visits/update", updateVisitRequest); // Update visit request
 propertyRouter.get("/:propertyId/visits", getPropertyVisits); // Get property visits
 propertyRouter.get("/:propertyId/visits/available-slots", getAvailableSlots); // Check availability
 propertyRouter.get("/user/:userId/visits", getUserVisits); // Get user's visit requests

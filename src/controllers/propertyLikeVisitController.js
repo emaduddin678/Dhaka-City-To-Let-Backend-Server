@@ -1,6 +1,7 @@
 const PropertyLikeModel = require("../models/propertyLikeModel");
 const PropertyVisitModel = require("../models/propertyVisitModel");
 const PropertyModel = require("../models/proppertyModel");
+const UserModel = require("../models/userModel");
 
 const getLikedPropertyCounts = async (req, res) => {
   try {
@@ -110,13 +111,13 @@ const createVisitRequest = async (req, res) => {
     const { visitDate, visitTime, notes } = req.body;
     const tenant = req.user;
 
+    const tenantInfo = await UserModel.findById(tenant.id);
     // Validate tenant account
-    if (!tenant.isTenant) {
+    if (!tenantInfo.isTenant) {
       return res
         .status(403)
         .json({ message: "Only tenants can request visits" });
     }
-
     // Get property with owner details
     const property = await PropertyModel.findById(propertyId).populate("owner");
     if (!property) {
@@ -131,7 +132,7 @@ const createVisitRequest = async (req, res) => {
       status: { $in: ["pending", "confirmed"] },
     });
 
-    if (existingVisits >= 3) {
+    if (existingVisits >= 2) {
       return res.status(400).json({
         message: "This time slot is fully booked. Please choose another.",
       });
@@ -140,17 +141,17 @@ const createVisitRequest = async (req, res) => {
     // Create visit request
     const visit = await PropertyVisitModel.create({
       propertyId,
-      tenantId: tenant._id,
+      tenantId: tenantInfo._id,
       ownerId: property.owner._id,
       visitDate: new Date(visitDate),
       visitTime,
       status: "pending",
       tenantDetails: {
-        firstName: tenant.firstName,
-        lastName: tenant.lastName,
-        email: tenant.email,
-        phoneNumber: tenant.phoneNumber,
-        profileImage: tenant.profileImage,
+        firstName: tenantInfo.firstName,
+        lastName: tenantInfo.lastName,
+        email: tenantInfo.email,
+        phoneNumber: tenantInfo.phoneNumber,
+        profileImage: tenantInfo.profileImage,
       },
       notes,
     });
@@ -163,6 +164,62 @@ const createVisitRequest = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Visit request created",
+      data: visit,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+const updateVisitRequest = async (req, res) => {
+  try {
+    const { propertyId } = req.params;
+    const { visitId, visitDate, visitTime, notes } = req.body;
+    const tenant = req.user;
+
+    const tenantInfo = await UserModel.findById(tenant.id);
+
+    if (!tenantInfo.isTenant) {
+      return res
+        .status(403)
+        .json({ message: "Only tenants can update visits" });
+    }
+
+    // Check existing visit
+    const visit = await PropertyVisitModel.findOne({
+      _id: visitId,
+      propertyId,
+      tenantId: tenantInfo._id,
+    });
+
+    if (!visit) {
+      return res.status(404).json({ message: "Visit request not found" });
+    }
+
+    // Check slot availability (exclude the current visit)
+    const existingVisits = await PropertyVisitModel.countDocuments({
+      propertyId,
+      visitDate: new Date(visitDate),
+      visitTime,
+      status: { $in: ["pending", "confirmed"] },
+      _id: { $ne: visitId },
+    });
+
+    if (existingVisits >= 2) {
+      return res.status(400).json({
+        message: "This time slot is fully booked. Please choose another.",
+      });
+    }
+
+    // Update the visit
+    visit.visitDate = new Date(visitDate);
+    visit.visitTime = visitTime;
+    visit.notes = notes;
+
+    await visit.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Visit request updated successfully",
       data: visit,
     });
   } catch (error) {
@@ -262,7 +319,7 @@ const getUserLikedProperties = async (req, res) => {
 
 const getUserVisits = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.params.userId;
 
     const visits = await PropertyVisitModel.find({ tenantId: userId })
       .populate("propertyId")
@@ -290,29 +347,10 @@ const getPropertyVisits = async (req, res) => {
 const cancelVisit = async (req, res) => {
   try {
     const { visitId } = req.params;
-    const userId = req.user.id;
 
-    const visit = await PropertyVisitModel.findById(visitId);
-    if (!visit) {
-      return res.status(404).json({ message: "Visit not found" });
-    }
+    await PropertyVisitModel.findByIdAndDelete(visitId);
 
-    // Only tenant who created it OR owner can cancel
-    if (
-      visit.tenantId.toString() !== userId.toString() &&
-      visit.ownerId.toString() !== userId.toString()
-    ) {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
-
-    visit.status = "cancelled";
-    await visit.save();
-
-    await PropertyModel.findByIdAndUpdate(visit.propertyId, {
-      $inc: { visitsCount: -1 },
-    });
-
-    res.json({ success: true, message: "Visit cancelled", data: visit });
+    res.json({ success: true, message: "Visit cancelled" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -323,6 +361,7 @@ module.exports = {
   likeProperty,
   unlikeProperty,
   createVisitRequest,
+  updateVisitRequest,
   getAvailableSlots,
   updateVisitStatus,
   getUserLikedProperties,
