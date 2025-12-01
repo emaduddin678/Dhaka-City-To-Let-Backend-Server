@@ -4,14 +4,12 @@ const morgan = require("morgan");
 const createError = require("http-errors");
 const rateLimit = require("express-rate-limit");
 const userRouter = require("./routers/userRouter");
-const seedRouter = require("./routers/seedRouter");
 const authRouter = require("./routers/authRouter");
-const categoryRouter = require("./routers/categoryRouter");
-const productRouter = require("./routers/ProductRouter");
 const propertyRouter = require("./routers/propertyRouter");
 const multer = require("multer");
 const cors = require("cors");
 const { isProduction } = require("./secret");
+const bookingRouter = require("./routers/bookingRoute");
 
 const app = express();
 
@@ -67,12 +65,10 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Routes
-app.use("/api/seed", seedRouter);
 app.use("/api/users", userRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/properties", propertyRouter);
-app.use("/api/categories", categoryRouter);
-app.use("/api/products", productRouter);
+app.use("/api/bookings", bookingRouter);
 
 app.get("/", (req, res) => {
   res.send("Welcome to server");

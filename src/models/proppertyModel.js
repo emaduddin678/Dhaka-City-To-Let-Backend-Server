@@ -78,7 +78,8 @@ const propertySchema = new Schema(
       required: [true, "Availability date is required"],
       validate: {
         validator: function (v) {
-          return v >= new Date();
+          // Only validate if the document is new
+          return this.isNew ? v >= new Date() : true;
         },
         message: "Availability date must be in the future or today",
       },

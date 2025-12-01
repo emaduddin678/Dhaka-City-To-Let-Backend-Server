@@ -1,6 +1,5 @@
 // const createHttpError = require("http-errors");
 const data = require("../data");
-const Product = require("../models/productModel");
 const UserModel = require("../models/userModel");
 
 const seedUser = async (req, res, next) => {
@@ -21,17 +20,5 @@ const seedUser = async (req, res, next) => {
     // next(createHttpError(403, "route not found->client error handled"));
   }
 };
-
-const seedProducts = async (req, res, next) => {
-  try {
-    await Product.deleteMany({});
-
-    const products = await Product.insertMany(data.products);
-
-    return res.status(202).json(products);
-  } catch (error) {
-    next(error);
-  }
-};
-
-module.exports = { seedUser, seedProducts };
+ 
+module.exports = { seedUser,  };
