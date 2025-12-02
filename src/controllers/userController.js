@@ -284,7 +284,10 @@ const handleActivateUserAccount = async (req, res, next) => {
     // const user = await UserModel.create(decoded);
 
     // Create new user
-    const newUser = await UserModel.create(decoded);
+    const newUser = await UserModel.create({
+      ...decoded,
+      emergencyContact: decoded.phoneNumber || "",
+    });
 
     console.log("Created User:");
     if (newUser) {
