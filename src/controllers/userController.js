@@ -40,6 +40,7 @@ const {
   setAccessTokenCookie,
   setRefreshTokenCookie,
 } = require("../helper/cookie");
+const getRedirectUrl = require("../helper/getRedirectUrl");
 // const mongoose = require("mongoose");
 // const fs = require("fs").promises;
 
@@ -231,6 +232,7 @@ const handleProcessRegister = async (req, res, next) => {
 };
 const handleActivateUserAccount = async (req, res, next) => {
   try {
+    const redirectUrl = getRedirectUrl("/auth/login");
     console.log("Activation endpoint hit");
     const token = req.params.token;
     if (!token) throw createError(404, "Token not found!");
@@ -251,14 +253,14 @@ const handleActivateUserAccount = async (req, res, next) => {
         failedHtmlTemplateData = failedHtmlTemplate
           .replace("{{FailedMsg}}", "Activation link expired")
           .replace("{{extraMessage}}", "Account Activation Failed")
-          .replace("{{redirectUrl}}", "http://localhost:5173/auth/login");
+          .replace("{{redirectUrl}}", `${redirectUrl}`);
         return res.send(failedHtmlTemplateData);
       }
       if (error.name === "JsonWebTokenError") {
         failedHtmlTemplateData = failedHtmlTemplate
           .replace("{{FailedMsg}}", "Invalid activation link")
           .replace("{{extraMessage}}", "Account Activation Failed")
-          .replace("{{redirectUrl}}", "http://localhost:5173/auth/login");
+          .replace("{{redirectUrl}}", `${redirectUrl}`);
         return res.send(failedHtmlTemplateData);
       }
       throw error;
@@ -274,7 +276,7 @@ const handleActivateUserAccount = async (req, res, next) => {
           "User Account With This Email is  Already Activated."
         )
         .replace("{{extraMessage}}", "Please Login Instead.")
-        .replace("{{redirectUrl}}", "http://localhost:5173/auth/login");
+        .replace("{{redirectUrl}}", `${redirectUrl}`);
       return res.send(failedHtmlTemplateData);
     }
     console.log("User not activated");
