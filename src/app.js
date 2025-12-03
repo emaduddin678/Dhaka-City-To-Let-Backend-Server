@@ -10,6 +10,7 @@ const multer = require("multer");
 const cors = require("cors");
 const { isProduction } = require("./secret");
 const bookingRouter = require("./routers/bookingRoute");
+const adminRouter = require("./routers/adminRouter");
 
 const app = express();
 
@@ -69,6 +70,7 @@ app.use("/api/users", userRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/properties", propertyRouter);
 app.use("/api/bookings", bookingRouter);
+app.use("/api/admin", adminRouter);
 
 app.get("/", (req, res) => {
   res.send("Welcome to server");

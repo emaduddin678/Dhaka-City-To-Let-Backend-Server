@@ -45,22 +45,17 @@ const isLoggedOut = async (req, res, next) => {
 
 const isAdmin = async (req, res, next) => {
   try {
-    // console.log("Admin refresh token  => " + req.user.isAdmin);
-    // console.log("Admin login token  => " + req.user.isAdmin);
-
     if (!req.user.isAdmin) {
-      throw createError(
-        403,
-        "Forbidden. You must be an admin to access this resources."
-      );
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. Admin privileges required.",
+      });
     }
-
     next();
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };
-
 const isOwner = async (req, res, next) => {
   // console.log(req.user.isOwner);
   if (!req.user.isOwner) {
