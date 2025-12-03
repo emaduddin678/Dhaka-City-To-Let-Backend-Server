@@ -10,7 +10,6 @@ const addressSchema = new Schema(
     postcode: { type: String, trim: true },
     cityCorp: { type: String, trim: true },
     dhakaCitySubArea: { type: String, trim: true },
-    addressLine: { type: String, required: true, trim: true },
   },
   { _id: false }
 );

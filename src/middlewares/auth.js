@@ -57,7 +57,7 @@ const isAdmin = async (req, res, next) => {
   }
 };
 const isOwner = async (req, res, next) => {
-  // console.log(req.user.isOwner);
+  console.log(req.user.isOwner);
   if (!req.user.isOwner) {
     return res.status(403).json({
       success: false,
@@ -66,5 +66,15 @@ const isOwner = async (req, res, next) => {
   }
   next();
 };
+const isTenant = async (req, res, next) => {
+  console.log(req.user.isTenant);
+  if (!req.user.isTenant) {
+    return res.status(403).json({
+      success: false,
+      message: "Only property owners can access this resource",
+    });
+  }
+  next();
+};
 
-module.exports = { isLoggedIn, isLoggedOut, isAdmin, isOwner };
+module.exports = { isLoggedIn, isLoggedOut, isAdmin, isOwner, isTenant };

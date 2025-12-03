@@ -38,7 +38,13 @@ const handleLogin = async (req, res, next) => {
 
     // token, cookie
     const accessToken = createJSONWebToken(
-      { id: user._id, email: user.email },
+      {
+        id: user._id,
+        email: user.email,
+        isTenant: user?.isTenant,
+        isOwner: user?.isOwner,
+        isAdmin: user?.isAdmin,
+      },
       jwtAccessKey,
       "25m"
     );
@@ -46,7 +52,13 @@ const handleLogin = async (req, res, next) => {
 
     // refresh token, cookie
     const refreshToken = createJSONWebToken(
-      { id: user._id, email: user.email },
+      {
+        id: user._id,
+        email: user.email,
+        isTenant: user?.isTenant,
+        isOwner: user?.isOwner,
+        isAdmin: user?.isAdmin,
+      },
       jwtRefreshKey,
       "30d"
     );
@@ -122,14 +134,18 @@ const handleRefreshToken = async (req, res, next) => {
     }
 
     // ✅ FIXED: Extract id and email directly from decoded token
-    const { id, email } = decodedToken;
-    if (!id || !email) {
+    const { id, email, isTenant, isOwner, isAdmin } = decodedToken;
+    if (!id || !email || !isTenant || !isOwner || !isAdmin) {
       throw createError(401, "Invalid token payload. Please login again.");
     }
     // ✅ FIXED: Create new tokens with correct payload structure
-    const accessToken = createJSONWebToken({ id, email }, jwtAccessKey, "25m");
+    const accessToken = createJSONWebToken(
+      { id, email, isTenant, isOwner, isAdmin },
+      jwtAccessKey,
+      "25m"
+    );
     const newRefreshToken = createJSONWebToken(
-      { id, email },
+      { id, email, isTenant, isOwner, isAdmin },
       jwtRefreshKey,
       "30d"
     );

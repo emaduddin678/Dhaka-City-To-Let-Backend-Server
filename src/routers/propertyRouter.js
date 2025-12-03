@@ -29,6 +29,7 @@ const {
 
 const { isLoggedOut, isLoggedIn, isOwner } = require("../middlewares/auth.js");
 const PropertyLikeModel = require("../models/propertyLikeModel.js");
+const { uploadImageMulter } = require("../middlewares/uploadImageMulter.js");
 // const auth = require("../middlewares/auth.js");
 // import { validateProperty } from "../middlewares/validation.js";
 // console.log(auth);
@@ -44,7 +45,12 @@ propertyRouter.get("/by-property-id/:propertyId", getPropertyByPropertyId);
 propertyRouter.use(isLoggedIn); // All routes below require login
 
 propertyRouter.get("/owner/my-properties", isOwner, getMyProperties); // Get owner's properties
-propertyRouter.post("/", isOwner, createProperty); // Create property
+propertyRouter.post(
+  "/",
+  isOwner,
+  uploadImageMulter.array("images", 7),
+  createProperty
+); // Create property
 propertyRouter.post("/bulk", isOwner, createMultipleProperties); // Create property
 // Owner only routes
 propertyRouter.get("/owner/:ownerId", getPropertiesByOwner); // GET /api/properties/owner/:ownerId

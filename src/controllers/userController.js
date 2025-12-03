@@ -158,6 +158,7 @@ const handleProcessRegister = async (req, res, next) => {
     // ✅ Convert boolean strings to actual booleans
     const isTenant = req.body.isTenant === "true" || req.body.isTenant === true;
     const isOwner = req.body.isOwner === "true" || req.body.isOwner === true;
+    const isAdmin = req.body.isAdmin === "true" || req.body.isOwner === true;
     const agreeTerms =
       req.body.agreeTerms === "true" || req.body.agreeTerms === true;
 
@@ -187,6 +188,7 @@ const handleProcessRegister = async (req, res, next) => {
       ...uploadedImages,
       isTenant,
       isOwner,
+      isAdmin,
       permanentAddressOption,
       presentAddress,
       permanentAddress,
@@ -298,12 +300,24 @@ const handleActivateUserAccount = async (req, res, next) => {
     if (newUser) {
       // ✅ Generate tokens
       const accessToken = createJSONWebToken(
-        { id: newUser._id, email: newUser.email },
+        {
+          id: newUser._id,
+          email: newUser.email,
+          isTenant: newUser?.isTenant,
+          isOwner: newUser?.isOwner,
+          isAdmin: newUser?.isAdmin,
+        },
         jwtAccessKey,
         "30m"
       );
       const refreshToken = createJSONWebToken(
-        { id: newUser._id, email: newUser.email },
+        {
+          id: newUser._id,
+          email: newUser.email,
+          isTenant: newUser?.isTenant,
+          isOwner: newUser?.isOwner,
+          isAdmin: newUser?.isAdmin,
+        },
         jwtRefreshKey,
         "30d"
       );

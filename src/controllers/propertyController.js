@@ -4,16 +4,8 @@ const PropertyModel = require("../models/proppertyModel");
 // @desc    Create new property
 // @route   POST /api/properties
 // @access  Private (Owner only)
-const createProperty = async (req, res) => {
+const createPropertyold = async (req, res) => {
   try {
-    // setTimeout(() => {
-    //   res.status(400).json({
-    //     success: false,
-    //     message: "Property not created successfully",
-    //     payload: { property: { ...req.body } },
-    //   });
-    // }, 1000);
-    // return;
     const {
       title,
       description,
@@ -143,7 +135,83 @@ const createProperty = async (req, res) => {
     });
   }
 };
+const createProperty = async (req, res) => {
+  try {
+    const {
+      title,
+      description,
+      propertyType,
+      category,
+      propertyFor,
+      furnishedStatus,
+      availabilityDate,
+      amenities,
+      propertySize,
+      price,
+      isNegotiable,
+      address,
+      bedrooms,
+      bathrooms,
+      floorNumber,
+      flatNumber,
+      drawingRoom,
+      diningRoom,
+      balconies,
+    } = req.body;
 
+    // Handle images
+    let imageUrls = [];
+    if (req.files && req.files.length > 0) {
+      // Upload to Cloudinary or your storage
+      const uploadPromises = req.files.map((file) =>
+        cloudinary.uploader.upload(file.path, {
+          folder: "properties",
+        })
+      );
+      const uploadResults = await Promise.all(uploadPromises);
+      imageUrls = uploadResults.map((result) => result.secure_url);
+    }
+
+    // Rest of your validation logic...
+
+    const property = await PropertyModel.create({
+      title,
+      description,
+      propertyType,
+      category,
+      propertyFor,
+      furnishedStatus,
+      availabilityDate,
+      amenities: JSON.parse(amenities),
+      propertySize,
+      price,
+      isNegotiable,
+      address: JSON.parse(address),
+      bedrooms,
+      bathrooms,
+      floorNumber,
+      flatNumber,
+      drawingRoom,
+      diningRoom,
+      balconies,
+      images: imageUrls,
+      owner: req.user.id,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Property created successfully",
+      payload: { property, propertyId: property.propertyId },
+    });
+  } catch (error) {
+    console.error("Create property error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to create property",
+      error: error.message,
+    });
+  }
+};
 const createMultipleProperties = async (req, res) => {
   try {
     const properties = req.body;
