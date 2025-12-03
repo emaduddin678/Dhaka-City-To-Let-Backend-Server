@@ -3,69 +3,498 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Account Activated</title>
+    <title>Account Activated - To-Let Sys</title>
     <style>
-      body {
-        font-family: "Segoe UI", Arial, sans-serif;
-        background: linear-gradient(135deg, #4caf50, #2e7d32);
+      * {
         margin: 0;
         padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #6c43ea 0%, #8b5cf6 50%, #c084fc 100%);
+        min-height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
-        height: 100vh;
-        color: #333;
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
       }
-      .card {
-        background: #fff;
-        border-radius: 12px;
-        padding: 40px 30px;
-        max-width: 420px;
-        width: 90%;
+
+      /* Animated background elements */
+      body::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+        background-size: 50px 50px;
+        animation: moveBackground 20s linear infinite;
+      }
+
+      @keyframes moveBackground {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(50px, 50px); }
+      }
+
+      /* Floating particles */
+      .particle {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        pointer-events: none;
+        animation: float 15s infinite ease-in-out;
+      }
+
+      .particle:nth-child(1) {
+        width: 80px;
+        height: 80px;
+        top: 10%;
+        left: 20%;
+        animation-delay: 0s;
+      }
+
+      .particle:nth-child(2) {
+        width: 60px;
+        height: 60px;
+        top: 70%;
+        left: 80%;
+        animation-delay: 2s;
+      }
+
+      .particle:nth-child(3) {
+        width: 100px;
+        height: 100px;
+        top: 40%;
+        left: 10%;
+        animation-delay: 4s;
+      }
+
+      @keyframes float {
+        0%, 100% {
+          transform: translateY(0) rotate(0deg);
+          opacity: 0.3;
+        }
+        50% {
+          transform: translateY(-30px) rotate(180deg);
+          opacity: 0.6;
+        }
+      }
+
+      .container {
+        position: relative;
+        z-index: 1;
+        max-width: 500px;
+        width: 100%;
+      }
+
+      .success-card {
+        background: white;
+        border-radius: 24px;
+        padding: 50px 40px;
         text-align: center;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-        animation: fadeIn 0.6s ease-out;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        animation: slideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        position: relative;
+        overflow: hidden;
       }
-      .icon {
-        font-size: 60px;
-        color: #4caf50;
-        margin-bottom: 15px;
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(40px) scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
       }
-      h2 {
-        margin: 0 0 10px;
-        font-size: 24px;
-        color: #222;
+
+      /* Decorative circles */
+      .success-card::before,
+      .success-card::after {
+        content: '';
+        position: absolute;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6c43ea, #8b5cf6);
+        opacity: 0.05;
       }
-      p {
-        font-size: 15px;
-        color: #555;
-        margin: 0 0 20px;
+
+      .success-card::before {
+        width: 300px;
+        height: 300px;
+        top: -150px;
+        right: -150px;
       }
-      .countdown {
-        font-weight: bold;
-        color: #4caf50;
+
+      .success-card::after {
+        width: 200px;
+        height: 200px;
+        bottom: -100px;
+        left: -100px;
       }
+
+      /* Icon container with animated checkmark */
+      .icon-container {
+        position: relative;
+        margin: 0 auto 30px;
+        width: 120px;
+        height: 120px;
+      }
+
+      .circle-bg {
+        position: absolute;
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(135deg, #6c43ea, #8b5cf6);
+        border-radius: 50%;
+        animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+      }
+
+      @keyframes scaleIn {
+        from {
+          transform: scale(0);
+        }
+        to {
+          transform: scale(1);
+        }
+      }
+
+      .checkmark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 60px;
+        height: 60px;
+      }
+
+      .checkmark-circle {
+        stroke-dasharray: 166;
+        stroke-dashoffset: 166;
+        stroke-width: 3;
+        stroke: white;
+        fill: none;
+        animation: drawCircle 0.6s cubic-bezier(0.65, 0, 0.45, 1) 0.4s forwards;
+      }
+
+      .checkmark-check {
+        transform-origin: 50% 50%;
+        stroke-dasharray: 48;
+        stroke-dashoffset: 48;
+        stroke-width: 4;
+        stroke: white;
+        fill: none;
+        animation: drawCheck 0.4s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+      }
+
+      @keyframes drawCircle {
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+
+      @keyframes drawCheck {
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+
+      /* Confetti animation */
+      .confetti {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: #6c43ea;
+        animation: confettiFall 3s ease-out forwards;
+      }
+
+      @keyframes confettiFall {
+        0% {
+          transform: translateY(0) rotate(0deg);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(400px) rotate(720deg);
+          opacity: 0;
+        }
+      }
+
+      h1 {
+        font-size: 32px;
+        color: #1e293b;
+        margin: 0 0 15px;
+        font-weight: 700;
+        animation: fadeIn 0.6s ease-out 0.4s both;
+      }
+
+      .success-message {
+        font-size: 18px;
+        color: #475569;
+        margin: 0 0 30px;
+        line-height: 1.6;
+        animation: fadeIn 0.6s ease-out 0.6s both;
+      }
+
       @keyframes fadeIn {
         from {
           opacity: 0;
-          transform: translateY(20px);
+          transform: translateY(10px);
         }
         to {
           opacity: 1;
           transform: translateY(0);
         }
       }
+
+      /* Features list */
+      .features {
+        margin: 30px 0;
+        animation: fadeIn 0.6s ease-out 0.8s both;
+      }
+
+      .feature-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        margin: 10px 0;
+        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+      }
+
+      .feature-item:hover {
+        transform: translateX(5px);
+        background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+      }
+
+      .feature-icon {
+        width: 24px;
+        height: 24px;
+        background: linear-gradient(135deg, #6c43ea, #8b5cf6);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        flex-shrink: 0;
+      }
+
+      .feature-text {
+        font-size: 14px;
+        color: #475569;
+        font-weight: 500;
+        text-align: left;
+      }
+
+      /* Countdown section */
+      .countdown-section {
+        margin: 35px 0 0;
+        padding: 25px;
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+        border-radius: 16px;
+        animation: fadeIn 0.6s ease-out 1s both;
+      }
+
+      .countdown-text {
+        font-size: 16px;
+        color: #92400e;
+        margin-bottom: 15px;
+      }
+
+      .countdown-timer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+
+      .countdown-number {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #6c43ea, #8b5cf6);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        font-weight: 700;
+        color: white;
+        box-shadow: 0 4px 6px rgba(108, 67, 234, 0.3);
+        animation: pulse 1s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+      }
+
+      .countdown-label {
+        font-size: 12px;
+        color: #92400e;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+      }
+
+      /* Manual redirect button */
+      .redirect-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #6c43ea, #8b5cf6);
+        color: white;
+        text-decoration: none;
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(108, 67, 234, 0.3);
+        border: none;
+        cursor: pointer;
+      }
+
+      .redirect-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 12px rgba(108, 67, 234, 0.4);
+      }
+
+      .redirect-button:active {
+        transform: translateY(0);
+      }
+
+      /* Progress bar */
+      .progress-bar-container {
+        width: 100%;
+        height: 4px;
+        background: rgba(108, 67, 234, 0.2);
+        border-radius: 2px;
+        overflow: hidden;
+        margin-top: 15px;
+      }
+
+      .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #6c43ea, #8b5cf6);
+        border-radius: 2px;
+        animation: progress 5s linear forwards;
+      }
+
+      @keyframes progress {
+        from {
+          width: 100%;
+        }
+        to {
+          width: 0%;
+        }
+      }
+
+      /* Responsive design */
+      @media (max-width: 600px) {
+        .success-card {
+          padding: 40px 25px;
+        }
+
+        h1 {
+          font-size: 26px;
+        }
+
+        .success-message {
+          font-size: 16px;
+        }
+
+        .icon-container {
+          width: 100px;
+          height: 100px;
+        }
+
+        .circle-bg {
+          width: 100px;
+          height: 100px;
+        }
+
+        .checkmark {
+          width: 50px;
+          height: 50px;
+        }
+
+        .countdown-number {
+          width: 50px;
+          height: 50px;
+          font-size: 24px;
+        }
+      }
     </style>
   </head>
   <body>
-    <div class="card">
-      <div class="icon">🎉</div>
-      <h2>Account Activated Successfully</h2>
-      <p>You can now log in to your account.</p>
-      <p>
-        Redirecting in
-        <span class="countdown" id="countdown">5</span> seconds...
-      </p>
+    <!-- Floating particles -->
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+
+    <div class="container">
+      <div class="success-card">
+        <!-- Animated checkmark icon -->
+        <div class="icon-container">
+          <div class="circle-bg"></div>
+          <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+            <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+            <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+          </svg>
+        </div>
+
+        <h1>Account Activated Successfully! 🎉</h1>
+        <p class="success-message">
+          Welcome aboard! Your account is now active and ready to use. Get ready to find your perfect home!
+        </p>
+
+        <!-- Features -->
+        <div class="features">
+          <div class="feature-item">
+            <div class="feature-icon">✓</div>
+            <div class="feature-text">Full access to property listings</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">✓</div>
+            <div class="feature-text">Direct messaging with owners</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">✓</div>
+            <div class="feature-text">Save and manage your favorites</div>
+          </div>
+        </div>
+
+        <!-- Countdown section -->
+        <div class="countdown-section">
+          <p class="countdown-text">Redirecting you to login page in:</p>
+          <div class="countdown-timer">
+            <div>
+              <div class="countdown-number" id="countdown">5</div>
+              <div class="countdown-label">seconds</div>
+            </div>
+          </div>
+          <button class="redirect-button" onclick="redirectNow()">
+            <span>Go to Login Now</span>
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
+            </svg>
+          </button>
+          <div class="progress-bar-container">
+            <div class="progress-bar"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script>
@@ -73,19 +502,52 @@
       const countdownEl = document.getElementById("countdown");
       const targetUrl = "{{redirectUrl}}";
 
+      // Create confetti
+      function createConfetti() {
+        const colors = ['#6c43ea', '#8b5cf6', '#c084fc', '#fbbf24', '#f59e0b'];
+        for (let i = 0; i < 50; i++) {
+          setTimeout(() => {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.left = Math.random() * 100 + '%';
+            confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.animationDelay = Math.random() * 0.5 + 's';
+            confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+            document.body.appendChild(confetti);
+            setTimeout(() => confetti.remove(), 3000);
+          }, i * 30);
+        }
+      }
+
+      // Trigger confetti on load
+      window.addEventListener('load', createConfetti);
+
+      // Countdown timer
       const timer = setInterval(() => {
         seconds--;
         countdownEl.textContent = seconds;
+        
         if (seconds <= 0) {
           clearInterval(timer);
-          const newTab = window.open(targetUrl, "_blank");
-          if (newTab) {
-            window.close();
-          } else {
-            window.location.href = targetUrl;
-          }
+          redirect();
         }
       }, 1000);
+
+      // Redirect function
+      function redirect() {
+        const newTab = window.open(targetUrl, "_blank");
+        if (newTab) {
+          setTimeout(() => window.close(), 500);
+        } else {
+          window.location.href = targetUrl;
+        }
+      }
+
+      // Manual redirect
+      function redirectNow() {
+        clearInterval(timer);
+        redirect();
+      }
     </script>
   </body>
 </html>

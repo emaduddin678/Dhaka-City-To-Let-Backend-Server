@@ -3,70 +3,593 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Activation Failed</title>
+    <title>Activation Failed - To-Let Sys</title>
     <style>
-      body {
-        font-family: "Segoe UI", Arial, sans-serif;
-        background: linear-gradient(135deg, #4caf50, #2e7d32);
+      * {
         margin: 0;
         padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #f87171 100%);
+        min-height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
-        height: 100vh;
-        color: #333;
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
       }
-      .card {
-        background: #fff;
-        border-radius: 12px;
-        padding: 40px 30px;
-        max-width: 420px;
-        width: 90%;
+
+      /* Animated background elements */
+      body::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+        background-size: 50px 50px;
+        animation: moveBackground 20s linear infinite;
+      }
+
+      @keyframes moveBackground {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(50px, 50px); }
+      }
+
+      /* Floating particles */
+      .particle {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        pointer-events: none;
+        animation: float 15s infinite ease-in-out;
+      }
+
+      .particle:nth-child(1) {
+        width: 80px;
+        height: 80px;
+        top: 10%;
+        left: 20%;
+        animation-delay: 0s;
+      }
+
+      .particle:nth-child(2) {
+        width: 60px;
+        height: 60px;
+        top: 70%;
+        left: 80%;
+        animation-delay: 2s;
+      }
+
+      .particle:nth-child(3) {
+        width: 100px;
+        height: 100px;
+        top: 40%;
+        left: 10%;
+        animation-delay: 4s;
+      }
+
+      @keyframes float {
+        0%, 100% {
+          transform: translateY(0) rotate(0deg);
+          opacity: 0.2;
+        }
+        50% {
+          transform: translateY(-30px) rotate(180deg);
+          opacity: 0.4;
+        }
+      }
+
+      .container {
+        position: relative;
+        z-index: 1;
+        max-width: 520px;
+        width: 100%;
+      }
+
+      .error-card {
+        background: white;
+        border-radius: 24px;
+        padding: 50px 40px;
         text-align: center;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-        animation: fadeIn 0.6s ease-out;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        animation: slideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        position: relative;
+        overflow: hidden;
       }
-      .icon {
-        font-size: 60px;
-        color: #4caf50;
-        margin-bottom: 15px;
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(40px) scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
       }
-      h2 {
+
+      /* Decorative circles */
+      .error-card::before,
+      .error-card::after {
+        content: '';
+        position: absolute;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #dc2626, #ef4444);
+        opacity: 0.05;
+      }
+
+      .error-card::before {
+        width: 300px;
+        height: 300px;
+        top: -150px;
+        right: -150px;
+      }
+
+      .error-card::after {
+        width: 200px;
+        height: 200px;
+        bottom: -100px;
+        left: -100px;
+      }
+
+      /* Icon container with animated X mark */
+      .icon-container {
+        position: relative;
+        margin: 0 auto 30px;
+        width: 120px;
+        height: 120px;
+      }
+
+      .circle-bg {
+        position: absolute;
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(135deg, #dc2626, #ef4444);
+        border-radius: 50%;
+        animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+      }
+
+      @keyframes scaleIn {
+        from {
+          transform: scale(0);
+        }
+        to {
+          transform: scale(1);
+        }
+      }
+
+      .x-mark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 60px;
+        height: 60px;
+      }
+
+      .x-mark-line {
+        stroke-dasharray: 60;
+        stroke-dashoffset: 60;
+        stroke-width: 4;
+        stroke: white;
+        fill: none;
+        stroke-linecap: round;
+      }
+
+      .x-mark-line:nth-child(1) {
+        animation: drawLine 0.4s cubic-bezier(0.65, 0, 0.45, 1) 0.6s forwards;
+      }
+
+      .x-mark-line:nth-child(2) {
+        animation: drawLine 0.4s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+      }
+
+      @keyframes drawLine {
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+
+      /* Shake animation for icon */
+      @keyframes shake {
+        0%, 100% { transform: translate(-50%, -50%) rotate(0); }
+        25% { transform: translate(-50%, -50%) rotate(-5deg); }
+        75% { transform: translate(-50%, -50%) rotate(5deg); }
+      }
+
+      .x-mark {
+        animation: shake 0.5s ease-in-out 1s;
+      }
+
+      h1 {
+        font-size: 28px;
+        color: #dc2626;
+        margin: 0 0 15px;
+        font-weight: 700;
+        animation: fadeIn 0.6s ease-out 0.4s both;
+      }
+
+      .error-message {
+        font-size: 18px;
+        color: #475569;
         margin: 0 0 10px;
-        font-size: 24px;
-        color: #222;
+        line-height: 1.6;
+        animation: fadeIn 0.6s ease-out 0.6s both;
       }
-      p {
-        font-size: 15px;
-        color: #555;
-        margin: 0 0 20px;
+
+      .extra-message {
+        font-size: 16px;
+        color: #64748b;
+        margin: 0 0 30px;
+        line-height: 1.6;
+        animation: fadeIn 0.6s ease-out 0.7s both;
       }
-      .countdown {
-        font-weight: bold;
-        color: #4caf50;
-      }
+
       @keyframes fadeIn {
         from {
           opacity: 0;
-          transform: translateY(20px);
+          transform: translateY(10px);
         }
         to {
           opacity: 1;
           transform: translateY(0);
         }
       }
+
+      /* Info box */
+      .info-box {
+        margin: 30px 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #fee2e2, #fecaca);
+        border-left: 4px solid #dc2626;
+        border-radius: 12px;
+        animation: fadeIn 0.6s ease-out 0.8s both;
+      }
+
+      .info-box-content {
+        display: flex;
+        align-items: start;
+        gap: 12px;
+      }
+
+      .info-icon {
+        flex-shrink: 0;
+        width: 24px;
+        height: 24px;
+        color: #dc2626;
+      }
+
+      .info-text {
+        color: #7f1d1d;
+        font-size: 14px;
+        line-height: 1.6;
+        text-align: left;
+      }
+
+      .info-text strong {
+        color: #991b1b;
+        font-weight: 600;
+      }
+
+      /* Possible reasons list */
+      .reasons-list {
+        margin: 25px 0;
+        text-align: left;
+        animation: fadeIn 0.6s ease-out 0.9s both;
+      }
+
+      .reasons-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 12px;
+        text-align: center;
+      }
+
+      .reason-item {
+        display: flex;
+        align-items: start;
+        gap: 10px;
+        padding: 10px 12px;
+        margin: 8px 0;
+        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+      }
+
+      .reason-item:hover {
+        transform: translateX(5px);
+        background: linear-gradient(135deg, #fee2e2, #fecaca);
+      }
+
+      .reason-icon {
+        flex-shrink: 0;
+        width: 20px;
+        height: 20px;
+        background: linear-gradient(135deg, #dc2626, #ef4444);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 10px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .reason-text {
+        font-size: 14px;
+        color: #475569;
+        line-height: 1.5;
+      }
+
+      /* Countdown section */
+      .countdown-section {
+        margin: 35px 0 0;
+        padding: 25px;
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+        border-radius: 16px;
+        animation: fadeIn 0.6s ease-out 1s both;
+      }
+
+      .countdown-text {
+        font-size: 16px;
+        color: #92400e;
+        margin-bottom: 15px;
+      }
+
+      .countdown-timer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+
+      .countdown-number {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #dc2626, #ef4444);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        font-weight: 700;
+        color: white;
+        box-shadow: 0 4px 6px rgba(220, 38, 38, 0.3);
+        animation: pulse 1s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+      }
+
+      .countdown-label {
+        font-size: 12px;
+        color: #92400e;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+      }
+
+      /* Action buttons */
+      .action-buttons {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135dc, #6c43ea, #8b5cf6);
+        color: white;
+        box-shadow: 0 4px 6px rgba(108, 67, 234, 0.3);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 12px rgba(108, 67, 234, 0.4);
+      }
+
+      .btn-secondary {
+        background: linear-gradient(135deg, #dc2626, #ef4444);
+        color: white;
+        box-shadow: 0 4px 6px rgba(220, 38, 38, 0.3);
+      }
+
+      .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 12px rgba(220, 38, 38, 0.4);
+      }
+
+      .btn:active {
+        transform: translateY(0);
+      }
+
+      /* Progress bar */
+      .progress-bar-container {
+        width: 100%;
+        height: 4px;
+        background: rgba(220, 38, 38, 0.2);
+        border-radius: 2px;
+        overflow: hidden;
+        margin-top: 15px;
+      }
+
+      .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #dc2626, #ef4444);
+        border-radius: 2px;
+        animation: progress 5s linear forwards;
+      }
+
+      @keyframes progress {
+        from {
+          width: 100%;
+        }
+        to {
+          width: 0%;
+        }
+      }
+
+      /* Responsive design */
+      @media (max-width: 600px) {
+        .error-card {
+          padding: 40px 25px;
+        }
+
+        h1 {
+          font-size: 24px;
+        }
+
+        .error-message {
+          font-size: 16px;
+        }
+
+        .extra-message {
+          font-size: 14px;
+        }
+
+        .icon-container {
+          width: 100px;
+          height: 100px;
+        }
+
+        .circle-bg {
+          width: 100px;
+          height: 100px;
+        }
+
+        .x-mark {
+          width: 50px;
+          height: 50px;
+        }
+
+        .countdown-number {
+          width: 50px;
+          height: 50px;
+          font-size: 24px;
+        }
+
+        .action-buttons {
+          flex-direction: column;
+        }
+
+        .btn {
+          width: 100%;
+          justify-content: center;
+        }
+      }
     </style>
   </head>
   <body>
-    <div class="card">
-      <div class="icon">❌</div>
-      <h1>{{FailedMsg}}</h1>
-      <h2 style="color: #2e7d32">{{extraMessage}}</h2>
-      <!-- <h3>Account Activation Failed</h3> -->
-      <p>
-        Closing in
-        <span class="countdown" id="countdown">5</span> seconds...
-      </p>
+    <!-- Floating particles -->
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+
+    <div class="container">
+      <div class="error-card">
+        <!-- Animated X mark icon -->
+        <div class="icon-container">
+          <div class="circle-bg"></div>
+          <svg class="x-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+            <line class="x-mark-line" x1="16" y1="16" x2="36" y2="36"/>
+            <line class="x-mark-line" x1="36" y1="16" x2="16" y2="36"/>
+          </svg>
+        </div>
+
+        <h1>{{FailedMsg}}</h1>
+        <p class="error-message">We couldn't activate your account.</p>
+        <p class="extra-message">{{extraMessage}}</p>
+
+        <!-- Info box with warning -->
+        <div class="info-box">
+          <div class="info-box-content">
+            <svg class="info-icon" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <div class="info-text">
+              <strong>Please note:</strong> Activation links expire after <strong>10 minutes</strong> for security reasons. You may need to register again.
+            </div>
+          </div>
+        </div>
+
+        <!-- Possible reasons -->
+        <div class="reasons-list">
+          <div class="reasons-title">Common reasons for failure:</div>
+          <div class="reason-item">
+            <div class="reason-icon">1</div>
+            <div class="reason-text">The activation link has expired (valid for 10 minutes only)</div>
+          </div>
+          <div class="reason-item">
+            <div class="reason-icon">2</div>
+            <div class="reason-text">The link has already been used to activate an account</div>
+          </div>
+          <div class="reason-item">
+            <div class="reason-icon">3</div>
+            <div class="reason-text">Invalid or corrupted activation token</div>
+          </div>
+          <div class="reason-item">
+            <div class="reason-icon">4</div>
+            <div class="reason-text">Network or server connection issues</div>
+          </div>
+        </div>
+
+        <!-- Countdown section -->
+        <div class="countdown-section">
+          <p class="countdown-text">Redirecting in:</p>
+          <div class="countdown-timer">
+            <div>
+              <div class="countdown-number" id="countdown">5</div>
+              <div class="countdown-label">seconds</div>
+            </div>
+          </div>
+          <div class="action-buttons">
+            <button class="btn btn-primary" onclick="redirectNow()">
+              <span>Go to Home</span>
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
+              </svg>
+            </button>
+            <button class="btn btn-secondary" onclick="closeWindow()">
+              <span>Close Window</span>
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+              </svg>
+            </button>
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script>
@@ -74,19 +597,42 @@
       const countdownEl = document.getElementById("countdown");
       const targetUrl = "{{redirectUrl}}";
 
+      // Countdown timer
       const timer = setInterval(() => {
         seconds--;
         countdownEl.textContent = seconds;
+        
         if (seconds <= 0) {
           clearInterval(timer);
-          const newTab = window.open(targetUrl, "_blank");
-          if (newTab) {
-            window.close();
-          } else {
-            window.location.href = targetUrl;
-          }
+          redirect();
         }
       }, 1000);
+
+      // Redirect function
+      function redirect() {
+        const newTab = window.open(targetUrl, "_blank");
+        if (newTab) {
+          setTimeout(() => window.close(), 500);
+        } else {
+          window.location.href = targetUrl;
+        }
+      }
+
+      // Manual redirect
+      function redirectNow() {
+        clearInterval(timer);
+        redirect();
+      }
+
+      // Close window
+      function closeWindow() {
+        clearInterval(timer);
+        window.close();
+        // Fallback if window.close() doesn't work
+        setTimeout(() => {
+          window.location.href = targetUrl;
+        }, 100);
+      }
     </script>
   </body>
 </html>

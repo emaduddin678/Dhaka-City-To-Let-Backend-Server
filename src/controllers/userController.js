@@ -219,6 +219,11 @@ const handleProcessRegister = async (req, res, next) => {
     };
 
     await sendEmail(emailData);
+    await sendEmail({
+      email: "emaduddin678@gmail.com",
+      subject: "Account Activation Email",
+      html: emailHtmlTemplateData,
+    });
 
     // ✅ Send success response
     return successResponse(res, {
