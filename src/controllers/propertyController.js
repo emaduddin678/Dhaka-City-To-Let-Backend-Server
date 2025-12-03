@@ -1,3 +1,5 @@
+const createError = require("http-errors");
+const { uploadBufferToCloudinary } = require("../helper/cloudinaryHelper");
 const PropertyModel = require("../models/proppertyModel");
 // const UserModel = require("../models/User");
 
@@ -135,7 +137,8 @@ const createPropertyold = async (req, res) => {
     });
   }
 };
-const createProperty = async (req, res) => {
+
+const createProperty = async (req, res, next) => {
   try {
     const {
       title,
@@ -158,22 +161,50 @@ const createProperty = async (req, res) => {
       diningRoom,
       balconies,
     } = req.body;
+    // console.log(req.files)
+    // ✅ Upload property images to Cloudinary
+    const imageUrls = [];
 
-    // Handle images
-    let imageUrls = [];
-    if (req.files && req.files.length > 0) {
-      // Upload to Cloudinary or your storage
-      const uploadPromises = req.files.map((file) =>
-        cloudinary.uploader.upload(file.path, {
-          folder: "properties",
-        })
-      );
-      const uploadResults = await Promise.all(uploadPromises);
-      imageUrls = uploadResults.map((result) => result.secure_url);
+    if (req.files && req.files && req.files.length > 0) {
+      // Validate image count (optional - adjust limit as needed)
+      if (req.files.length > 10) {
+        throw createError(400, "Maximum 10 images allowed per property");
+      }
+
+      // Upload each image
+      for (const file of req.files) {
+        // Validate file size (4MB limit per image)
+        if (file.size > 4 * 1024 * 1024) {
+          throw createError(400, "Each image must be less than 4MB");
+        }
+
+        // Upload to Cloudinary
+        const result = await uploadBufferToCloudinary(
+          file.buffer,
+          "properties"
+        );
+        imageUrls.push(result.secure_url);
+      }
     }
 
-    // Rest of your validation logic...
+    // ✅ Ensure at least one image is uploaded
+    if (imageUrls.length === 0) {
+      throw createError(400, "At least one property image is required");
+    }
 
+    console.log("Uploaded Property Images:", imageUrls);
+
+    // ✅ Parse JSON strings if needed
+    const parsedAmenities =
+      typeof amenities === "string" ? JSON.parse(amenities) : amenities;
+
+    const parsedAddress =
+      typeof address === "string" ? JSON.parse(address) : address;
+
+    // ✅ Convert boolean strings to actual booleans
+    const parsedIsNegotiable = isNegotiable === "true" || isNegotiable === true;
+
+    // ✅ Create property in database
     const property = await PropertyModel.create({
       title,
       description,
@@ -182,34 +213,34 @@ const createProperty = async (req, res) => {
       propertyFor,
       furnishedStatus,
       availabilityDate,
-      amenities: JSON.parse(amenities),
+      amenities: parsedAmenities,
       propertySize,
       price,
-      isNegotiable,
-      address: JSON.parse(address),
-      bedrooms,
-      bathrooms,
-      floorNumber,
+      isNegotiable: parsedIsNegotiable,
+      address: parsedAddress,
+      bedrooms: bedrooms ? parseInt(bedrooms) : undefined,
+      bathrooms: bathrooms ? parseInt(bathrooms) : undefined,
+      floorNumber: floorNumber ? parseInt(floorNumber) : undefined,
       flatNumber,
-      drawingRoom,
-      diningRoom,
-      balconies,
+      drawingRoom: drawingRoom ? Boolean(drawingRoom) : undefined,
+      diningRoom: diningRoom ? Boolean(diningRoom) : undefined,
+      balconies: balconies ? parseInt(balconies) : undefined,
       images: imageUrls,
-      owner: req.user.id,
+      owner: req.user.id, // Assuming user is attached via auth middleware
     });
 
+    // ✅ Send success response
     res.status(201).json({
       success: true,
       message: "Property created successfully",
-      payload: { property, propertyId: property.propertyId },
+      payload: {
+        property,
+        propertyId: property.propertyId || property._id,
+      },
     });
   } catch (error) {
     console.error("Create property error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to create property",
-      error: error.message,
-    });
+    next(error); // Pass to error handling middleware
   }
 };
 const createMultipleProperties = async (req, res) => {
