@@ -11,6 +11,8 @@ const cors = require("cors");
 const { isProduction } = require("./secret");
 const bookingRouter = require("./routers/bookingRoute");
 const adminRouter = require("./routers/adminRouter");
+const PropertyModel = require("./models/proppertyModel");
+const UserModel = require("./models/userModel");
 
 const app = express();
 

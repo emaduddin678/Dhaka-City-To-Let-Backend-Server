@@ -1,12 +1,18 @@
 // models/Property.js
 const { Schema, model } = require("mongoose");
 
-// Reusable address schema (same as User model)
 const addressSchema = new Schema(
   {
     division: { type: String, required: true, trim: true },
     district: { type: String, required: true, trim: true },
-    upazila: { type: String, trim: true },
+    upazila: { type: String, required: true, trim: true },
+    houseNumber: { type: String, required: true, trim: true },
+    roadNumber: { type: String, required: true, trim: true },
+    areaName: { type: String, required: true, trim: true },
+    block: { type: String, trim: true },
+    sector: { type: String, trim: true },
+    landmark: { type: String, trim: true },
+    googleMapsLink: { type: String, trim: true },
     postcode: { type: String, trim: true },
     cityCorp: { type: String, trim: true },
     dhakaCitySubArea: { type: String, trim: true },
@@ -228,13 +234,14 @@ const propertySchema = new Schema(
     timestamps: true, // Adds createdAt and updatedAt
   }
 );
-
 // Virtual for full address
 propertySchema.virtual("fullAddress").get(function () {
   const addr = this.address;
-  return `${addr.addressLine}, ${addr.dhakaCitySubArea || ""}, ${
-    addr.upazila || ""
-  }, ${addr.district}, ${addr.division}`.trim();
+  return `House ${addr.houseNumber}, Road ${addr.roadNumber}, ${
+    addr.areaName
+  }, ${addr.block || ""}, ${addr.sector || ""}, ${addr.landmark || ""}, ${
+    addr.dhakaCitySubArea || ""
+  }, ${addr.upazila || ""}, ${addr.district}, ${addr.division}`.trim();
 });
 
 // Static method to generate next property ID

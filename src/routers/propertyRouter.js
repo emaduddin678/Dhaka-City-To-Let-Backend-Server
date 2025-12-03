@@ -55,7 +55,12 @@ propertyRouter.post("/bulk", isOwner, createMultipleProperties); // Create prope
 // Owner only routes
 propertyRouter.get("/owner/:ownerId", getPropertiesByOwner); // GET /api/properties/owner/:ownerId
 propertyRouter.get("/:id", getPropertyById); // Get property by ID
-propertyRouter.put("/:id", isOwner, updateProperty); // Update property
+propertyRouter.put(
+  "/:id",
+  isOwner,
+  uploadImageMulter.array("images", 7), // Add multer middleware
+  updateProperty
+); // Update property
 propertyRouter.delete("/:id", isOwner, deleteProperty); // Delete property
 propertyRouter.patch("/:id/toggle-status", isOwner, togglePropertyStatus); // Activate/Deactivate
 

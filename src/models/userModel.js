@@ -1,24 +1,23 @@
 const { Schema, model } = require("mongoose");
 const bcrypt = require("bcryptjs");
-
 const addressSchema = new Schema(
   {
-    division: { type: String, trim: true },
-    district: { type: String, trim: true },
-    upazila: { type: String, trim: true },
+    division: { type: String, required: true, trim: true },
+    district: { type: String, required: true, trim: true },
+    upazila: { type: String, required: true, trim: true },
+    houseNumber: { type: String, required: true, trim: true },
+    roadNumber: { type: String, required: true, trim: true },
+    areaName: { type: String, required: true, trim: true },
+    block: { type: String, trim: true },
+    sector: { type: String, trim: true },
+    landmark: { type: String, trim: true },
+    googleMapsLink: { type: String, trim: true },
     postcode: { type: String, trim: true },
     cityCorp: { type: String, trim: true },
     dhakaCitySubArea: { type: String, trim: true },
-    houseNumber: { type: String, trim: true },
-    roadNumber: { type: String, trim: true },
-    block: { type: String, trim: true },
-    sector: { type: String, trim: true },
-    areaName: { type: String, trim: true },
-    landmark: { type: String, trim: true },
-    googleMapsLink: { type: String, trim: true },
   },
   { _id: false }
-); 
+);
 
 const userSchema = new Schema(
   {

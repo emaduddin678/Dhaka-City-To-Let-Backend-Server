@@ -1,142 +1,15 @@
 const createError = require("http-errors");
-const { uploadBufferToCloudinary } = require("../helper/cloudinaryHelper");
+const {
+  uploadBufferToCloudinary,
+  deleteFromCloudinary,
+  getPublicIdFromUrl,
+} = require("../helper/cloudinaryHelper");
 const PropertyModel = require("../models/proppertyModel");
 // const UserModel = require("../models/User");
 
 // @desc    Create new property
 // @route   POST /api/properties
 // @access  Private (Owner only)
-const createPropertyold = async (req, res) => {
-  try {
-    const {
-      title,
-      description,
-      propertyType,
-      category,
-      propertyFor,
-      furnishedStatus,
-      availabilityDate,
-      amenities,
-      propertySize,
-      price,
-      isNegotiable,
-      address,
-      bedrooms,
-      bathrooms,
-      floorNumber,
-      flatNumber,
-      drawingRoom,
-      diningRoom,
-      balconies,
-    } = req.body;
-
-    // Check if user is owner
-    if (!req.user.isOwner) {
-      return res.status(403).json({
-        success: false,
-        message: "Only owners can create properties",
-      });
-    }
-
-    let existingProperty;
-
-    if (address.postcode) {
-      existingProperty = await PropertyModel.findOne({
-        owner: req.user.id,
-        "address.addressLine": address.addressLine?.trim(),
-        "address.division": address.division,
-        "address.district": address.district,
-        "address.upazila": address.upazila,
-        "address.postcode": address.postcode,
-        floorNumber: floorNumber,
-        flatNumber: flatNumber?.trim(),
-      });
-    } else {
-      existingProperty = await PropertyModel.findOne({
-        owner: req.user.id,
-        "address.addressLine": address.addressLine?.trim(),
-        "address.division": address.division,
-        "address.district": address.district,
-        "address.upazila": address.upazila,
-        "address.cityCorp": address.cityCorp,
-        "address.dhakaCitySubArea": address.dhakaCitySubArea?.trim(),
-        floorNumber: floorNumber,
-        flatNumber: flatNumber?.trim(),
-      });
-    }
-    // Check for duplicate property with same address, floor, and flat
-
-    if (existingProperty) {
-      return res.status(409).json({
-        success: false,
-        message: `This property already exists at this address with Floor: ${floorNumber} and Flat: ${flatNumber}.`,
-        payload: {
-          existingPropertyId: existingProperty.propertyId,
-          conflictDetails: {
-            address: existingProperty.address,
-            floorNumber: existingProperty.floorNumber,
-            flatNumber: existingProperty.flatNumber,
-          },
-        },
-      });
-    }
-
-    // Create property
-    const property = await PropertyModel.create({
-      title,
-      description,
-      propertyType,
-      category,
-      propertyFor,
-      furnishedStatus,
-      availabilityDate,
-      amenities,
-      propertySize,
-      price,
-      isNegotiable,
-      address,
-      bedrooms,
-      bathrooms,
-      floorNumber,
-      flatNumber,
-      drawingRoom,
-      diningRoom,
-      balconies,
-      owner: req.user.id,
-    });
-
-    res.status(201).json({
-      success: true,
-      message: "Property created successfully",
-      payload: { property, propertyId: property.propertyId },
-    });
-  } catch (error) {
-    console.error("Create property error:", error);
-
-    // Handle validation errors
-    if (error.name === "ValidationError") {
-      const messages = Object.values(error.errors).map((err) => err.message);
-      return res.status(400).json({
-        success: false,
-        message: messages.join(", "),
-      });
-    }
-
-    // Handle duplicate key error
-    if (error.code === 11000) {
-      return res.status(400).json({
-        success: false,
-        message: "Property ID already exists. Please try again.",
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to create property",
-      error: error.message,
-    });
-  }
-};
 
 const createProperty = async (req, res, next) => {
   try {
@@ -161,7 +34,8 @@ const createProperty = async (req, res, next) => {
       diningRoom,
       balconies,
     } = req.body;
-    // console.log(req.files)
+    console.log(address);
+    // return;
     // ✅ Upload property images to Cloudinary
     const imageUrls = [];
 
@@ -243,6 +117,8 @@ const createProperty = async (req, res, next) => {
     next(error); // Pass to error handling middleware
   }
 };
+// controllers/propertyController.js
+
 const createMultipleProperties = async (req, res) => {
   try {
     const properties = req.body;
@@ -287,29 +163,34 @@ const createMultipleProperties = async (req, res) => {
         balconies,
       } = propertyData;
 
+      // Duplicate check based on new schema fields
       let existingProperty;
 
       if (address.postcode) {
         existingProperty = await PropertyModel.findOne({
           owner: req.user.id,
-          "address.addressLine": address.addressLine?.trim(),
           "address.division": address.division,
           "address.district": address.district,
           "address.upazila": address.upazila,
           "address.postcode": address.postcode,
-          floorNumber: floorNumber,
+          "address.houseNumber": address.houseNumber?.trim(),
+          "address.roadNumber": address.roadNumber?.trim(),
+          "address.areaName": address.areaName?.trim(),
+          floorNumber,
           flatNumber: flatNumber?.trim(),
         });
       } else {
         existingProperty = await PropertyModel.findOne({
           owner: req.user.id,
-          "address.addressLine": address.addressLine?.trim(),
           "address.division": address.division,
           "address.district": address.district,
           "address.upazila": address.upazila,
           "address.cityCorp": address.cityCorp,
           "address.dhakaCitySubArea": address.dhakaCitySubArea?.trim(),
-          floorNumber: floorNumber,
+          "address.houseNumber": address.houseNumber?.trim(),
+          "address.roadNumber": address.roadNumber?.trim(),
+          "address.areaName": address.areaName?.trim(),
+          floorNumber,
           flatNumber: flatNumber?.trim(),
         });
       }
@@ -318,7 +199,7 @@ const createMultipleProperties = async (req, res) => {
       if (existingProperty) {
         skippedProperties.push({
           title,
-          message: `Duplicate found at ${address.addressLine}, Floor: ${floorNumber}, Flat: ${flatNumber}`,
+          message: `Duplicate found at House: ${address.houseNumber}, Road: ${address.roadNumber}, Area: ${address.areaName}, Floor: ${floorNumber}, Flat: ${flatNumber}`,
         });
         continue;
       }
@@ -367,7 +248,6 @@ const createMultipleProperties = async (req, res) => {
     });
   }
 };
-
 // @desc    Get all properties (with filters)
 // @route   GET /api/properties
 // @access  Public
@@ -586,35 +466,161 @@ const getPropertyByPropertyId = async (req, res) => {
 // @desc    Update property
 // @route   PUT /api/properties/:id
 // @access  Private (Owner only)
-const updateProperty = async (req, res) => {
+// const createError = require("http-errors");
+// const {
+//   uploadBufferToCloudinary,
+//   deleteFromCloudinary,
+//   getPublicIdFromUrl,
+// } = require("../helper/cloudinaryHelper");
+// const PropertyModel = require("../models/proppertyModel");
+
+// @desc    Update property with image support
+// @route   PUT /api/properties/:id
+// @access  Private (Owner only)
+const updateProperty = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const {
+      title,
+      description,
+      propertyType,
+      category,
+      propertyFor,
+      furnishedStatus,
+      availabilityDate,
+      amenities,
+      propertySize,
+      price,
+      isNegotiable,
+      address,
+      bedrooms,
+      bathrooms,
+      floorNumber,
+      flatNumber,
+      drawingRoom,
+      diningRoom,
+      balconies,
+      existingImages, // Array of image URLs to keep
+    } = req.body;
 
     // Find property
     const property = await PropertyModel.findById(id);
 
     if (!property) {
-      return res.status(404).json({
-        success: false,
-        message: "Property not found",
-      });
+      throw createError(404, "Property not found");
     }
 
     // Check ownership
     if (property.owner.toString() !== req.user.id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: "You can only update your own properties",
-      });
+      throw createError(403, "You can only update your own properties");
     }
 
-    // Update property
+    // ✅ Handle Image Updates
+    let finalImageUrls = [];
+
+    // Parse existing images to keep
+    const imagesToKeep = existingImages
+      ? typeof existingImages === "string"
+        ? JSON.parse(existingImages)
+        : existingImages
+      : [];
+
+    // Add kept images to final array
+    finalImageUrls = [...imagesToKeep];
+
+    // Get images to delete (old images not in keep list)
+    const imagesToDelete = property.images.filter(
+      (img) => !imagesToKeep.includes(img)
+    );
+
+    // Delete removed images from Cloudinary
+    for (const imageUrl of imagesToDelete) {
+      try {
+        const publicId = getPublicIdFromUrl(imageUrl);
+        if (publicId) {
+          await deleteFromCloudinary(publicId);
+          console.log(`Deleted image: ${publicId}`);
+        }
+      } catch (error) {
+        console.error(`Failed to delete image: ${imageUrl}`, error);
+      }
+    }
+
+    // Upload new images if provided
+    if (req.files && req.files.length > 0) {
+      // Validate total image count
+      const totalImages = finalImageUrls.length + req.files.length;
+      if (totalImages > 10) {
+        throw createError(
+          400,
+          `Maximum 10 images allowed. You have ${finalImageUrls.length} existing images and trying to add ${req.files.length} more.`
+        );
+      }
+
+      // Upload each new image
+      for (const file of req.files) {
+        if (file.size > 4 * 1024 * 1024) {
+          throw createError(400, "Each image must be less than 4MB");
+        }
+
+        const result = await uploadBufferToCloudinary(
+          file.buffer,
+          "properties"
+        );
+        finalImageUrls.push(result.secure_url);
+      }
+    }
+
+    // Ensure at least one image
+    if (finalImageUrls.length === 0) {
+      throw createError(400, "At least one property image is required");
+    }
+
+    console.log("Final Property Images:", finalImageUrls);
+
+    // ✅ Parse JSON strings if needed
+    const parsedAmenities =
+      typeof amenities === "string" ? JSON.parse(amenities) : amenities;
+
+    const parsedAddress =
+      typeof address === "string" ? JSON.parse(address) : address;
+
+    // ✅ Convert boolean strings to actual booleans
+    const parsedIsNegotiable = isNegotiable === "true" || isNegotiable === true;
+    const parsedDrawingRoom = drawingRoom === "true" || drawingRoom === true;
+    const parsedDiningRoom = diningRoom === "true" || diningRoom === true;
+
+    // ✅ Update property
+    const updateData = {
+      title,
+      description,
+      propertyType,
+      category,
+      propertyFor,
+      furnishedStatus,
+      availabilityDate,
+      amenities: parsedAmenities,
+      propertySize,
+      price,
+      isNegotiable: parsedIsNegotiable,
+      address: parsedAddress,
+      bedrooms: bedrooms ? parseInt(bedrooms) : property.bedrooms,
+      bathrooms: bathrooms ? parseInt(bathrooms) : property.bathrooms,
+      floorNumber: floorNumber ? parseInt(floorNumber) : property.floorNumber,
+      flatNumber: flatNumber || property.flatNumber,
+      drawingRoom: parsedDrawingRoom,
+      diningRoom: parsedDiningRoom,
+      balconies: balconies ? parseInt(balconies) : property.balconies,
+      images: finalImageUrls,
+    };
+
     const updatedProperty = await PropertyModel.findByIdAndUpdate(
       id,
-      { $set: req.body },
+      { $set: updateData },
       { new: true, runValidators: true }
     ).populate("owner", "firstName lastName email phoneNumber profileImage");
 
+    // ✅ Send success response
     res.status(200).json({
       success: true,
       message: "Property updated successfully",
@@ -622,20 +628,7 @@ const updateProperty = async (req, res) => {
     });
   } catch (error) {
     console.error("Update property error:", error);
-
-    if (error.name === "ValidationError") {
-      const messages = Object.values(error.errors).map((err) => err.message);
-      return res.status(400).json({
-        success: false,
-        message: messages.join(", "),
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to update property",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
