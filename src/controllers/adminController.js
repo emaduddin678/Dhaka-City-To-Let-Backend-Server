@@ -150,11 +150,12 @@ const getAllUsers = async (req, res, next) => {
 
 // @desc    Update user status (ban/unban/promote)
 // @route   PUT /api/admin/users/:id/status
-// @access  Private/Admin
+// @access  Private/Admin 
+
 const updateUserStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { action } = req.body; // 'ban', 'unban', 'make-tenant', 'make-owner', 'remove-tenant', 'remove-owner'
+    const { action } = req.body; // 'ban', 'unban', 'make-tenant', 'make-owner', 'remove-tenant', 'remove-owner', 'make-admin'
 
     const user = await UserModel.findById(id);
 
@@ -165,6 +166,11 @@ const updateUserStatus = async (req, res, next) => {
     // Prevent admin from banning themselves
     if (action === "ban" && user._id.toString() === req.user.id.toString()) {
       throw createError(400, "You cannot ban yourself");
+    }
+
+    // Prevent admin from demoting themselves
+    if (action === "remove-admin" && user._id.toString() === req.user.id.toString()) {
+      throw createError(400, "You cannot remove your own admin privileges");
     }
 
     switch (action) {
@@ -186,6 +192,12 @@ const updateUserStatus = async (req, res, next) => {
       case "remove-owner":
         user.isOwner = false;
         break;
+      case "make-admin":
+        user.isAdmin = true;
+        break;
+      case "remove-admin":
+        user.isAdmin = false;
+        break;
       default:
         throw createError(400, "Invalid action");
     }
@@ -201,7 +213,6 @@ const updateUserStatus = async (req, res, next) => {
     next(error);
   }
 };
-
 // @desc    Delete user
 // @route   DELETE /api/admin/users/:id
 // @access  Private/Admin
