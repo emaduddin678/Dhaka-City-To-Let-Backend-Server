@@ -134,10 +134,16 @@ const handleRefreshToken = async (req, res, next) => {
     }
 
     // ✅ FIXED: Extract id and email directly from decoded token
-    const { id, email, isTenant, isOwner, isAdmin } = decodedToken;
-    if (!id || !email || !isTenant || !isOwner || !isAdmin) {
-      throw createError(401, "Invalid token payload. Please login again.");
-    }
+  const { id, email, isTenant, isOwner, isAdmin } = decodedToken;
+  if (
+    !id ||
+    !email ||
+    isTenant === undefined ||
+    isOwner === undefined ||
+    isAdmin === undefined
+  ) {
+    throw createError(401, "Invalid token payload. Please login again.");
+  }
     // ✅ FIXED: Create new tokens with correct payload structure
     const accessToken = createJSONWebToken(
       { id, email, isTenant, isOwner, isAdmin },
@@ -160,8 +166,14 @@ const handleRefreshToken = async (req, res, next) => {
     });
   } catch (error) {
     // Clear cookies on refresh failure
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
+    // Only clear cookies for specific token errors
+    if (
+      error.name === "TokenExpiredError" ||
+      error.name === "JsonWebTokenError"
+    ) {
+      res.clearCookie("accessToken");
+      res.clearCookie("refreshToken");
+    }
     next(error);
   }
 };

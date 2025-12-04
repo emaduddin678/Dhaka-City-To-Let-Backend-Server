@@ -10,6 +10,7 @@ const bookingSchema = new Schema(
       trim: true,
       match: [/^BK\d{8}$/, "Booking ID must be in format BK00000001"],
     },
+
     // Property and users
     propertyId: {
       type: Schema.Types.ObjectId,
@@ -41,7 +42,7 @@ const bookingSchema = new Schema(
       },
     },
 
-    // // Rental period (in months)
+    // Rental period (in months)
     rentalPeriod: {
       type: Number,
       required: [true, "Rental period is required"],
@@ -72,18 +73,8 @@ const bookingSchema = new Schema(
       required: [true, "Total amount is required"],
     },
 
-    // Payment status
-    paymentStatus: {
-      type: String,
-      enum: ["pending", "partial", "paid", "refunded"],
-      default: "pending",
-    },
-
-    paidAmount: {
-      type: Number,
-      default: 0,
-      min: [0, "Paid amount cannot be negative"],
-    },
+    // ❌ REMOVED: Payment status fields (as per your requirement)
+    // paymentStatus and paidAmount are removed
 
     // Booking status
     status: {
@@ -93,8 +84,7 @@ const bookingSchema = new Schema(
         "owner-review", // Owner is reviewing
         "accepted", // Owner accepted
         "rejected", // Owner rejected
-        "payment-pending", // Waiting for payment
-        "confirmed", // Payment done, booking confirmed
+        "confirmed", // Booking confirmed (no payment tracking)
         "active", // Tenant has moved in
         "completed", // Rental period ended
         "cancelled", // Cancelled by either party

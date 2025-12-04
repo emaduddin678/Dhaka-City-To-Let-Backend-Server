@@ -8,7 +8,7 @@ const UserModel = require("../models/userModel");
 // 1. CREATE BOOKING REQUEST (Tenant books a property)
 const createBookingRequest = async (req, res, next) => {
   try {
-    const tenantId = req.user.id; // From auth middleware
+    const tenantId = req.user.id;
     const { propertyId } = req.params;
     const {
       moveInDate,
@@ -90,7 +90,6 @@ const createBookingRequest = async (req, res, next) => {
     ]);
 
     // TODO: Send notification to owner (email/SMS)
-    // await sendNotification(property.owner.email, booking);
 
     res.status(201).json({
       success: true,
@@ -107,7 +106,7 @@ const createBookingRequest = async (req, res, next) => {
 const getMyBookings = async (req, res, next) => {
   try {
     const tenantId = req.user.id;
-    const { status } = req.query; // Optional filter by status
+    const { status } = req.query;
 
     const query = { tenantId };
     if (status) query.status = status;
@@ -222,17 +221,18 @@ const acceptBooking = async (req, res, next) => {
       throw createHttpError(400, "Cannot accept booking at this stage");
     }
 
-    booking.status = "payment-pending";
+    // ✅ SIMPLIFIED: Direct acceptance without payment logic
+    booking.status = "accepted";
     booking.acceptedAt = new Date();
     booking.ownerResponse = ownerResponse;
     booking.specialTerms = specialTerms;
     await booking.save();
 
-    // TODO: Notify tenant to make payment
+    // TODO: Notify tenant about acceptance
 
     res.json({
       success: true,
-      message: "Booking accepted! Waiting for tenant payment.",
+      message: "Booking accepted successfully!",
       booking,
     });
   } catch (error) {
@@ -283,13 +283,13 @@ const rejectBooking = async (req, res, next) => {
   }
 };
 
-// ==================== PAYMENT & CONFIRMATION ====================
+// ==================== CONFIRMATION ====================
 
-// 7. CONFIRM PAYMENT (After payment is made)
+// 7. CONFIRM BOOKING (Mark as confirmed/active)
 const confirmPayment = async (req, res, next) => {
   try {
     const { bookingId } = req.params;
-    const { paidAmount, paymentMethod, transactionId } = req.body;
+    const userId = req.user.id;
 
     const booking = await BookingModel.findById(bookingId);
 
@@ -297,30 +297,38 @@ const confirmPayment = async (req, res, next) => {
       throw createHttpError(404, "Booking not found");
     }
 
-    if (booking.status !== "payment-pending") {
-      throw createHttpError(400, "Payment not expected at this stage");
+    // ✅ Allow both tenant and owner to confirm
+    const isAuthorized =
+      booking.tenantId.toString() === userId.toString() ||
+      booking.ownerId.toString() === userId.toString();
+
+    if (!isAuthorized) {
+      throw createHttpError(
+        403,
+        "You are not authorized to confirm this booking"
+      );
     }
 
-    // Verify payment amount
-    if (paidAmount < booking.totalAmount) {
-      booking.paymentStatus = "partial";
-    } else {
-      booking.paymentStatus = "paid";
-      booking.status = "confirmed";
-      booking.confirmedAt = new Date();
+    if (booking.status !== "accepted") {
+      throw createHttpError(
+        400,
+        "Booking must be accepted before confirmation"
+      );
     }
 
-    booking.paidAmount = paidAmount;
+    // ✅ SIMPLIFIED: Direct confirmation without payment tracking
+    booking.status = "confirmed";
+    booking.confirmedAt = new Date();
     await booking.save();
 
-    // TODO: Update property status (mark as rented)
+    // ✅ Update property status (mark as rented)
     await PropertyModel.findByIdAndUpdate(booking.propertyId, {
-      isActive: false, // Property is now occupied
+      isActive: false,
     });
 
     res.json({
       success: true,
-      message: "Payment confirmed! Booking is now active.",
+      message: "Booking confirmed successfully!",
       booking,
     });
   } catch (error) {
@@ -411,7 +419,7 @@ module.exports = {
   acceptBooking,
   rejectBooking,
 
-  // Payment
+  // Confirmation
   confirmPayment,
 
   // Utilities
