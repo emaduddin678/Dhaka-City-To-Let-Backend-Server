@@ -16,33 +16,38 @@ const UserModel = require("./models/userModel");
 
 const app = express();
 
-// CORS Configuration
+// ✅ Fixed: Separate production and development whitelists
 const whitelist = isProduction
-  ? [
-      "https://to-let-sys.netlify.app",
-      "http://localhost:4173",
-      "http://192.168.0.126:4173",
-    ]
+  ? ["https://to-let-sys.netlify.app"]
   : ["http://localhost:5173", "http://192.168.0.126:5173"];
 
 const corsOptions = {
   origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
+
     if (whitelist.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
+      console.log(`CORS blocked origin: ${origin}`);
       callback(new Error("Not allowed by CORS"));
     }
   },
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+  exposedHeaders: ["set-cookie"],
 };
 
 app.use(cors(corsOptions));
 
+// ✅ Handle preflight requests
+app.options("*", cors(corsOptions));
+
 // Rate Limiting
 const rateLimiter = rateLimit({
   windowMs: 1 * 60 * 1000,
-  max: 5,
+  max: 50, // ✅ Increased from 5 to prevent blocking legitimate users
   message: "Too many requests from this IP, please try again later",
 });
 
@@ -84,6 +89,16 @@ app.get("/test", rateLimiter, (req, res) => {
   });
 });
 
+// ✅ Health check endpoint for debugging
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "ok",
+    environment: isProduction ? "production" : "development",
+    cookies: req.cookies,
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Error handling
 app.use((req, res, next) => {
   next(createError(404, "route not found"));
@@ -99,6 +114,16 @@ app.use((err, req, res, next) => {
     }
     return res.status(400).json({ success: false, message: err.message });
   }
+
+  // ✅ Better error logging in production
+  if (isProduction) {
+    console.error("Error:", {
+      message: err.message,
+      status: err.status,
+      stack: err.stack,
+    });
+  }
+
   if (err) {
     return res.status(err.status || 500).json({
       success: false,

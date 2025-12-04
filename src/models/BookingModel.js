@@ -73,8 +73,7 @@ const bookingSchema = new Schema(
       required: [true, "Total amount is required"],
     },
 
-    // ❌ REMOVED: Payment status fields (as per your requirement)
-    // paymentStatus and paidAmount are removed
+   
 
     // Booking status
     status: {
