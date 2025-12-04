@@ -150,7 +150,7 @@ const getAllUsers = async (req, res, next) => {
 
 // @desc    Update user status (ban/unban/promote)
 // @route   PUT /api/admin/users/:id/status
-// @access  Private/Admin 
+// @access  Private/Admin
 
 const updateUserStatus = async (req, res, next) => {
   try {
@@ -169,7 +169,10 @@ const updateUserStatus = async (req, res, next) => {
     }
 
     // Prevent admin from demoting themselves
-    if (action === "remove-admin" && user._id.toString() === req.user.id.toString()) {
+    if (
+      action === "remove-admin" &&
+      user._id.toString() === req.user.id.toString()
+    ) {
       throw createError(400, "You cannot remove your own admin privileges");
     }
 
@@ -295,6 +298,7 @@ const getAllPropertiesAdmin = async (req, res, next) => {
         properties,
         pagination: {
           total,
+          propertyNumber: properties.length,
           page: Number(page),
           pages: Math.ceil(total / Number(limit)),
           limit: Number(limit),

@@ -282,7 +282,7 @@ const getAllProperties = async (req, res) => {
     } = req.query;
 
     // Build filter object
-    const filter = { isActive: isActive !== "false" }; // Default to active properties
+    const filter = { isActive: isActive !== "false", isApproved: true }; // Default to active properties
 
     if (propertyType) filter.propertyType = propertyType;
     if (category) filter.category = category;
