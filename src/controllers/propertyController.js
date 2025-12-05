@@ -411,7 +411,10 @@ const getPropertyByPropertyId = async (req, res) => {
   try {
     const { propertyId } = req.params;
     const { page = 1, limit = 10 } = req.query;
-    const query = { propertyId: { $regex: propertyId, $options: "i" } };
+    const query = {
+      propertyId: { $regex: propertyId, $options: "i" },
+      isApproved: true,
+    };
 
     const total = await PropertyModel.countDocuments(query);
 

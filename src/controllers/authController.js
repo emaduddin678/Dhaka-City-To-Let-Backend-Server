@@ -105,12 +105,13 @@ const checkAuth = async (req, res, next) => {
     if (me.isBanned) {
       throw createError(403, "Your account has been banned.");
     }
-
-    return successResponse(res, {
-      statusCode: 200,
-      message: "Current user fetched successfully",
-      payload: { me },
-    });
+    setTimeout(() => {
+      return successResponse(res, {
+        statusCode: 200,
+        message: "Current user fetched successfully",
+        payload: { me },
+      });
+    }, 2000);
   } catch (error) {
     next(error);
   }

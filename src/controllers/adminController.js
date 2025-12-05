@@ -117,10 +117,19 @@ const getAllUsers = async (req, res, next) => {
     // Filter by role
     if (isTenant !== undefined) filter.isTenant = isTenant === "true";
     if (isOwner !== undefined) filter.isOwner = isOwner === "true";
-    if (isBanned !== undefined) filter.isBanned = isBanned === "true";
+    if (isBanned !== undefined) {
+      if (isBanned === "active") {
+        filter.isBanned = "false";
+      }
+    }
+    if (isBanned !== undefined) {
+      if (isBanned === "banned") {
+        filter.isBanned = "true";
+      }
+    }
 
     const skip = (Number(page) - 1) * Number(limit);
-
+    console.log(filter, isBanned);
     const users = await UserModel.find(filter)
       .select("-password")
       .sort("-createdAt")
@@ -276,11 +285,13 @@ const getAllPropertiesAdmin = async (req, res, next) => {
         { propertyId: { $regex: search, $options: "i" } },
       ];
     }
-
+    console.log(req.query);
     if (isActive !== undefined) filter.isActive = isActive === "true";
     if (isApproved !== undefined) filter.isApproved = isApproved === "true";
 
     const skip = (Number(page) - 1) * Number(limit);
+
+    console.log(filter, skip);
 
     const properties = await PropertyModel.find(filter)
       .populate("owner", "firstName lastName email phoneNumber")
@@ -290,6 +301,7 @@ const getAllPropertiesAdmin = async (req, res, next) => {
       .lean();
 
     const total = await PropertyModel.countDocuments(filter);
+    // console.log(properties);
 
     return successResponse(res, {
       statusCode: 200,

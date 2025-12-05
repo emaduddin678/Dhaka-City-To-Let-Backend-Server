@@ -96,9 +96,9 @@ app.get("/test", rateLimiter, (req, res) => {
   res.status(200).send({
     message: "api testing is working",
   });
-});
+});  
 
-// ✅ Health check endpoint for debugging
+// ✅ Health check endpoint for debugging 
 app.get("/api/health", (req, res) => {
   res.json({
     status: "ok",
