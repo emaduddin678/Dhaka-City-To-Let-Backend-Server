@@ -15,6 +15,9 @@ const UserModel = require("../models/userModel");
 const handleLogin = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+    // setTimeout(() => {
+    // }, 150000);
+    // return;
 
     const user = await UserModel.findOne({ email });
 
@@ -44,7 +47,7 @@ const handleLogin = async (req, res, next) => {
         isAdmin: user?.isAdmin,
       },
       jwtAccessKey,
-      "55m"
+      "56m"
     );
 
     const refreshToken = createJSONWebToken(
@@ -160,7 +163,7 @@ const handleRefreshToken = async (req, res, next) => {
         isAdmin: user.isAdmin,
       },
       jwtAccessKey,
-      "55m"
+      "56m"
     );
 
     const newRefreshToken = createJSONWebToken(

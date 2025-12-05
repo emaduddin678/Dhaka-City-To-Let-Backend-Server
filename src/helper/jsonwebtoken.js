@@ -14,7 +14,7 @@ const createJSONWebToken = (payload, secretKey, expiresIn) => {
 
     return token;
   } catch (error) {
-    console.error("Failed to sign the JWT emad:", error);
+    console.error("Failed to sign the JWT:", error);
     throw error;
   }
 };

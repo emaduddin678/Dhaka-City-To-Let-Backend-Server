@@ -104,7 +104,37 @@ app.use((req, res, next) => {
   next(createError(404, "route not found"));
 });
 
+// app.use((err, req, res, next) => {
+//   if (err instanceof multer.MulterError) {
+//     if (err.code === "LIMIT_UNEXPECTED_FILE") {
+//       return res.status(400).json({
+//         success: false,
+//         message: `Invalid file type for ${err.field}. Only jpg, jpeg, png, webp, gif are allowed.`,
+//       });
+//     }
+//     return res.status(400).json({ success: false, message: err.message });
+//   }
+
+//   // ✅ Better error logging in production
+//   if (isProduction) {
+//     console.error("Error:", {
+//       message: err.message,
+//       status: err.status,
+//       stack: err.stack,
+//     });
+//   }
+//   if (err) {
+//     return res.status(err.status || 500).json({
+//       success: false,
+//       message: err.message || "Something went wrong",
+//     });
+//   }
+//   console.error("Hhhhflaksjdfl;aksjfdl;aksdjf;laksdjflask",err);
+//   next();
+// });
+
 app.use((err, req, res, next) => {
+  // ✅ Multer errors
   if (err instanceof multer.MulterError) {
     if (err.code === "LIMIT_UNEXPECTED_FILE") {
       return res.status(400).json({
@@ -113,6 +143,29 @@ app.use((err, req, res, next) => {
       });
     }
     return res.status(400).json({ success: false, message: err.message });
+  }
+
+  // ✅ JWT errors
+  if (err.name === "TokenExpiredError") {
+    return res.status(401).json({
+      success: false,
+      message: "Your session has expired. Please log in again.",
+      expiredAt: err.expiredAt,
+    });
+  }
+
+  if (err.name === "JsonWebTokenError") {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid token. Please log in again.",
+    });
+  }
+
+  if (err.name === "NotBeforeError") {
+    return res.status(401).json({
+      success: false,
+      message: "Token is not active yet.",
+    });
   }
 
   // ✅ Better error logging in production
@@ -124,13 +177,11 @@ app.use((err, req, res, next) => {
     });
   }
 
-  if (err) {
-    return res.status(err.status || 500).json({
-      success: false,
-      message: err.message || "Something went wrong",
-    });
-  }
-  next();
+  // ✅ Generic fallback
+  return res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Something went wrong",
+  });
 });
 
 module.exports = app;

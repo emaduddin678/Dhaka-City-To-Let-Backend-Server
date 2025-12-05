@@ -48,7 +48,7 @@ userRouter.delete("/:id([0-9a-fA-F]{24})", isLoggedIn, handleDeleteUserById);
 userRouter.put(
   "/reset-password",
   validateUserResetPassword,
-  runValidation,
+  // runValidation,
   handleResetPassword
 );
 
@@ -86,14 +86,14 @@ userRouter.put(
 userRouter.post(
   "/forget-password",
   validateUserForgetPassword,
-  runValidation,
+  // runValidation,
   handleForgetPassword
 );
 
 userRouter.put(
   "/update-password/:id([0-9a-fA-F]{24})",
   validateUserPasswordUpdate,
-  runValidation,
+  // runValidation,
   isLoggedIn,
   handleUpdatePassword
 );

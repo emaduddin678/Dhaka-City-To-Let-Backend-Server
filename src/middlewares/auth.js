@@ -19,7 +19,10 @@ const isLoggedIn = async (req, res, next) => {
 
     next();
   } catch (error) {
-    return next(error);
+    console.log("Hello World!");
+    console.log(error);
+    console.log("Stupid 2!");
+    next(error);
   }
 };
 
@@ -39,7 +42,7 @@ const isLoggedOut = async (req, res, next) => {
 
     next();
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };
 
