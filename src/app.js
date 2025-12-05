@@ -50,7 +50,16 @@ const rateLimiter = rateLimit({
   max: 50, // ✅ Increased from 5 to prevent blocking legitimate users
   message: "Too many requests from this IP, please try again later",
 });
-
+app.use((err, req, res, next) => {
+  if (err.message === "Not allowed by CORS") {
+    return res.status(403).json({
+      success: false,
+      message: "CORS policy violation",
+      origin: req.get("origin"),
+    });
+  }
+  next(err);
+});
 // Security headers
 app.use((req, res, next) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
