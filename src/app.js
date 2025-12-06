@@ -22,17 +22,18 @@ const whitelist = isProduction
   : ["http://localhost:5173", "http://192.168.0.126:5173"];
 
 const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
-    if (!origin) return callback(null, true);
+  // origin: function (origin, callback) {
+  //   // Allow requests with no origin (mobile apps, Postman, etc.)
+  //   if (!origin) return callback(null, true);
 
-    if (whitelist.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      console.log(`CORS blocked origin: ${origin}`);
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
+  //   if (whitelist.indexOf(origin) !== -1) {
+  //     callback(null, true);
+  //   } else {
+  //     console.log(`CORS blocked origin: ${origin}`);
+  //     callback(new Error("Not allowed by CORS"));
+  //   }
+  // },
+  origin: whitelist,
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
@@ -43,13 +44,21 @@ app.use(cors(corsOptions));
 
 // ✅ Handle preflight requests
 app.options("*", cors(corsOptions));
-
+app.use((req, res, next) => {
+  console.log("📨 Incoming request:", {
+    method: req.method,
+    path: req.path,
+    origin: req.get("origin"),
+  });
+  next();
+});
 // Rate Limiting
 const rateLimiter = rateLimit({
   windowMs: 1 * 60 * 1000,
   max: 50, // ✅ Increased from 5 to prevent blocking legitimate users
   message: "Too many requests from this IP, please try again later",
 });
+
 app.use((err, req, res, next) => {
   if (err.message === "Not allowed by CORS") {
     return res.status(403).json({
@@ -96,9 +105,9 @@ app.get("/test", rateLimiter, (req, res) => {
   res.status(200).send({
     message: "api testing is working",
   });
-});  
+});
 
-// ✅ Health check endpoint for debugging 
+// ✅ Health check endpoint for debugging
 app.get("/api/health", (req, res) => {
   res.json({
     status: "ok",
